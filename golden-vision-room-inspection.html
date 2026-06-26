@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Golden Vision Hotel – Room Inspection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --gold: #B8960C;
+    --gold-light: #F5ECC2;
+    --gold-dark: #7A6208;
+    --blue: #1A3A5C;
+    --blue-light: #E8F0F8;
+    --blue-mid: #2E6DA4;
+    --pass: #1A6B3A;
+    --pass-bg: #E6F4EC;
+    --fail: #9B1C1C;
+    --fail-bg: #FDECEA;
+    --na: #4A4A4A;
+    --na-bg: #F0F0F0;
+    --border: #D0D0D0;
+    --text: #1A1A1A;
+    --text-muted: #555;
+    --surface: #FFFFFF;
+    --page: #F5F5F3;
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI','Arial',sans-serif; background: var(--page); color: var(--text); min-height: 100vh; font-size: 16px; }
+
+  .header { background: var(--blue); color: #fff; padding: 18px 20px 14px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .header-logo { font-size: 11px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 2px; }
+  .header-title { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.3; }
+  .header-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .progress-bar-wrap { background: rgba(255,255,255,0.2); border-radius: 4px; height: 5px; margin-top: 10px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.3s ease; }
+  .progress-text { font-size: 11px; color: rgba(255,255,255,0.7); text-align: center; margin-top: 4px; }
+
+  .screen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  .setup-card { background: var(--surface); border-radius: var(--radius); padding: 24px 20px; box-shadow: var(--shadow); margin-top: 8px; }
+  .setup-card h2 { font-size: 17px; color: var(--blue); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1.5px solid var(--gold-light); }
+  .field-label { font-size: 14px; color: var(--text-muted); margin-bottom: 6px; display: block; }
+  .field-label span { font-size: 12px; }
+  input[type="text"], input[type="date"], select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 16px; color: var(--text); background: #FAFAFA; margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
+  input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: var(--blue-mid); background: #fff; }
+
+  .role-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .role-btn { padding: 14px 10px; border: 2px solid var(--border); border-radius: 10px; background: #FAFAFA; font-size: 15px; font-weight: 600; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; -webkit-tap-highlight-color: rgba(46,109,164,0.15); user-select: none; -webkit-user-select: none; }
+  .role-btn.selected { border-color: var(--blue-mid); background: var(--blue-light); color: var(--blue); }
+  .role-btn .role-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+  .start-btn { width: 100%; padding: 16px; background: var(--blue); color: #fff; border: none; border-radius: 10px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background 0.15s; }
+  .start-btn:hover { background: var(--blue-mid); }
+  .start-btn:disabled { background: #B0B0B0; cursor: not-allowed; }
+
+  .section-header { background: var(--blue); color: #fff; padding: 10px 14px; border-radius: 8px; margin: 14px 0 8px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .section-icon { font-size: 20px; }
+
+  .check-item { background: var(--surface); border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .check-label { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+  .check-label-en { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; font-style: italic; }
+
+  .tap-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 10px; }
+  .tap-btn { padding: 12px 4px; border: 2px solid var(--border); border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; background: #FAFAFA; color: var(--text-muted); text-align: center; transition: all 0.12s; line-height: 1.3; }
+  .tap-btn .btn-icon { font-size: 18px; display: block; }
+  .tap-btn:active { transform: scale(0.96); }
+  .tap-btn.pass-active { background: var(--pass-bg); border-color: var(--pass); color: var(--pass); }
+  .tap-btn.fail-active { background: var(--fail-bg); border-color: var(--fail); color: var(--fail); }
+  .tap-btn.na-active { background: var(--na-bg); border-color: #999; color: var(--na); }
+
+  /* Evidence section — always visible after result tapped */
+  .evidence-zone { display: none; border-top: 1px dashed #DDD; padding-top: 10px; margin-top: 2px; }
+  .evidence-zone.visible { display: block; }
+
+  .note-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; resize: none; height: 60px; font-family: inherit; color: var(--text); background: #FAFAFA; margin-bottom: 8px; outline: none; }
+  .note-input:focus { border-color: var(--blue-mid); background: #fff; }
+
+  .photo-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .photo-upload-btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 12px; border: 1.5px solid var(--blue-mid); border-radius: 8px; background: var(--blue-light); color: var(--blue); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .photo-upload-btn:active { opacity: 0.8; }
+  input[type="file"] { display: none; }
+  .thumb-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .thumb-wrap { position: relative; display: inline-block; }
+  .thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1.5px solid var(--border); cursor: pointer; }
+  .thumb-del { position: absolute; top: -5px; left: -5px; width: 18px; height: 18px; background: var(--fail); color: #fff; border: none; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .photo-count-badge { font-size: 12px; color: var(--pass); font-weight: 700; background: var(--pass-bg); padding: 3px 8px; border-radius: 20px; }
+
+  /* Fail highlight */
+  .check-item.has-fail { border-right: 4px solid var(--fail); }
+
+  /* Lightbox */
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 999; align-items: center; justify-content: center; }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 8px; }
+  #lightbox-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 28px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+  .approval-card { background: #fff; border: 2px solid var(--gold); border-radius: var(--radius); padding: 20px; margin: 14px 0; }
+  .approval-card h3 { font-size: 16px; color: var(--blue); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--gold-light); }
+  .approval-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .appr-btn { padding: 14px 6px; border: 2px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; background: #FAFAFA; text-align: center; line-height: 1.4; transition: all 0.12s; }
+  .appr-btn .appr-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .appr-btn.approved-active { background: var(--pass-bg); border-color: var(--pass); color: var(--pass); }
+  .appr-btn.reclean-active  { background: #FFF4E5; border-color: #C97A00; color: #7A4A00; }
+  .appr-btn.notready-active { background: var(--fail-bg); border-color: var(--fail); color: var(--fail); }
+
+  .submit-btn { width: 100%; padding: 17px; background: var(--gold-dark); color: #fff; border: none; border-radius: 10px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+  .submit-btn:hover { background: var(--gold); }
+  .submit-btn:disabled { background: #B0B0B0; cursor: not-allowed; }
+
+  /* Report */
+  .report-header { background: var(--blue); color: #fff; border-radius: var(--radius); padding: 20px; text-align: center; margin-bottom: 14px; }
+  .report-status { font-size: 26px; font-weight: 800; margin: 8px 0 4px; }
+  .report-status.approved { color: #7FFFA8; }
+  .report-status.reclean  { color: #FFD97A; }
+  .report-status.notready { color: #FF9494; }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 14px 0; }
+  .summary-card { background: var(--surface); border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .summary-num { font-size: 26px; font-weight: 800; }
+  .summary-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .summary-num.pass { color: var(--pass); }
+  .summary-num.fail { color: var(--fail); }
+  .summary-num.na   { color: #777; }
+
+  .issue-item { background: var(--fail-bg); border-right: 4px solid var(--fail); padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+  .issue-item strong { display: block; color: var(--fail); font-size: 13px; margin-bottom: 2px; }
+  .issue-photos { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .issue-photo { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+
+  .section-divider { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 8px; }
+  .action-btn { padding: 15px 10px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; text-align: center; border: none; transition: opacity 0.15s; }
+  .action-btn:hover { opacity: 0.88; }
+  .btn-whatsapp { background: #25D366; color: #fff; }
+  .btn-pdf      { background: var(--blue); color: #fff; }
+  .btn-new      { background: #fff; color: var(--blue); border: 2px solid var(--blue); grid-column: 1 / -1; }
+
+  .pdf-note { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 6px; background: var(--gold-light); border-radius: 8px; padding: 8px 12px; }
+
+  @media (max-width: 400px) {
+    .tap-btn { font-size: 13px; padding: 11px 2px; }
+    .check-label { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header" id="mainHeader">
+  <div class="header-logo">Golden Vision Hotel</div>
+  <div class="header-title" id="headerTitle">فحص الغرف | Room Inspection</div>
+  <div class="header-sub" id="headerSub">نظام ضمان الجودة</div>
+  <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="progress-text" id="progressText"></div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="document.getElementById('lightbox').classList.remove('open')">✕</button>
+  <img id="lightbox-img" src="" alt="evidence photo">
+</div>
+
+<!-- ══ SCREEN 1: SETUP ══ -->
+<div class="screen active" id="screenSetup">
+  <div class="setup-card">
+    <h2>📋 بدء فحص الغرفة &nbsp;|&nbsp; Start Inspection</h2>
+    <label class="field-label">رقم الغرفة &nbsp;<span>Room Number</span></label>
+    <input type="text" id="roomNumber" placeholder="مثال: 204">
+    <label class="field-label">الطابق &nbsp;<span>Floor</span></label>
+    <input type="text" id="floorNumber" placeholder="مثال: 2">
+    <label class="field-label">التاريخ &nbsp;<span>Date</span></label>
+    <input type="date" id="inspDate">
+    <label class="field-label">الوردية &nbsp;<span>Shift</span></label>
+    <select id="shiftSelect">
+      <option value="">اختر / Select...</option>
+      <option value="Morning">صباح / Morning</option>
+      <option value="Evening">مساء / Evening</option>
+      <option value="Night">ليل / Night</option>
+    </select>
+    <label class="field-label">اسم الموظف &nbsp;<span>Staff Name</span></label>
+    <input type="text" id="staffName" placeholder="الاسم الكامل / Full name">
+    <label class="field-label">الصفة &nbsp;<span>Role</span></label>
+    <select id="roleSelect" onchange="selectRole(this.value)">
+      <option value="">اختر الصفة / Select Role...</option>
+      <option value="cleaner">🧹 عامل نظافة — Cleaner</option>
+      <option value="supervisor">👁️ مشرف — Supervisor</option>
+    </select>
+    <button class="start-btn" id="startBtn" onclick="startInspection()" disabled>
+      ابدأ الفحص &nbsp;|&nbsp; Start ➜
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: CHECKLIST ══ -->
+<div class="screen" id="screenCheck">
+  <div id="checklistContent"></div>
+  <div class="approval-card" id="approvalCard" style="display:none">
+    <h3>✅ القرار النهائي &nbsp;|&nbsp; Final Decision</h3>
+    <div class="approval-btns">
+      <button class="appr-btn" onclick="setApproval('approved',this)">
+        <span class="appr-icon">✅</span>معتمدة<br><small>Approved</small>
+      </button>
+      <button class="appr-btn" onclick="setApproval('reclean',this)">
+        <span class="appr-icon">🔄</span>إعادة تنظيف<br><small>Re-clean</small>
+      </button>
+      <button class="appr-btn" onclick="setApproval('notready',this)">
+        <span class="appr-icon">🚫</span>غير جاهزة<br><small>Not Ready</small>
+      </button>
+    </div>
+  </div>
+  <button class="submit-btn" id="submitBtn" onclick="submitReport()" disabled>
+    إنهاء وإنشاء التقرير &nbsp;|&nbsp; Submit Report ✓
+  </button>
+  <div style="height:24px"></div>
+</div>
+
+<!-- ══ SCREEN 3: REPORT ══ -->
+<div class="screen" id="screenReport">
+  <div class="report-header">
+    <div style="font-size:13px;opacity:0.7">Golden Vision Hotel</div>
+    <div style="font-size:20px;font-weight:700;margin:6px 0 2px" id="rptRoomTitle">غرفة —</div>
+    <div style="font-size:13px;opacity:0.7" id="rptMeta"></div>
+    <div class="report-status" id="rptStatus"></div>
+    <div id="rptStatusAr" style="font-size:14px;opacity:0.85;margin-top:2px"></div>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card"><div class="summary-num pass" id="rptPass">0</div><div class="summary-lbl">✅ ناجح / Pass</div></div>
+    <div class="summary-card"><div class="summary-num fail" id="rptFail">0</div><div class="summary-lbl">❌ فاشل / Fail</div></div>
+    <div class="summary-card"><div class="summary-num na"   id="rptNA">0</div><div class="summary-lbl">➖ لا ينطبق / N/A</div></div>
+  </div>
+  <div id="rptIssues"></div>
+  <div class="action-row">
+    <button class="action-btn btn-whatsapp" onclick="shareWhatsApp()">📤 واتساب<br><small>WhatsApp</small></button>
+    <button class="action-btn btn-pdf"      onclick="downloadPDF()">📄 PDF<br><small>Download</small></button>
+    <button class="action-btn btn-new"      onclick="newInspection()">＋ فحص جديد &nbsp;|&nbsp; New Inspection</button>
+  </div>
+  <div class="pdf-note">💡 <strong>Photos:</strong> On mobile, full-quality originals save to your phone automatically. On desktop, originals stay in the browser. Compressed copies always appear in the PDF.<br>على الجوال: الصور الأصلية تُحفظ تلقائياً. على الكمبيوتر: تبقى في المتصفح. النسخ المضغوطة تظهر دائماً في PDF.</div>
+  <div style="height:24px"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const SECTIONS = [
+  {
+    id:'entrance', icon:'🚪', ar:'المدخل والصالة', en:'Entrance & Living Area',
+    items:[
+      {id:'floor_clean', ar:'الأرضية نظيفة ومكنوسة',                  en:'Floor swept and clean'},
+      {id:'floor_smell', ar:'لا رائحة كريهة من المكنسة أو الممسحة',   en:'No bad smell from mop or cleaning tools'},
+      {id:'under_furn',  ar:'تحت الأثاث نظيف (لا أوساخ مخفية)',       en:'Under furniture is clean (no hidden dirt)'},
+      {id:'sofa_clean',  ar:'الكنب والوسائد نظيفة وبدون أثر',          en:'Sofa and cushions clean and stain-free'},
+      {id:'table_clean', ar:'الطاولات ممسوحة من الأعلى والأسفل',       en:'Tables wiped top and underneath'},
+      {id:'no_leftover', ar:'لا توجد مقتنيات للنزيل السابق',           en:'No belongings left from previous guest'},
+      {id:'curtains',    ar:'الستائر مرتبة وسليمة',                    en:'Curtains straightened and intact'},
+    ]
+  },
+  {
+    id:'bedroom', icon:'🛏️', ar:'غرفة النوم', en:'Bedroom',
+    items:[
+      {id:'bed_made',  ar:'السرير مرتب بشكل صحيح',              en:'Bed properly made'},
+      {id:'under_bed', ar:'تحت السرير نظيف',                    en:'Under the bed is clean'},
+      {id:'wardrobe',  ar:'الخزانة فارغة ونظيفة من الداخل',     en:'Wardrobe empty and clean inside'},
+      {id:'mirror',    ar:'المرايا نظيفة بدون بصمات',           en:'Mirrors clean with no fingerprints'},
+      {id:'bedside',   ar:'طاولة السرير ممسوحة',                en:'Bedside table wiped'},
+      {id:'lamps',     ar:'الإضاءة تعمل بشكل سليم',             en:'All lights working'},
+    ]
+  },
+  {
+    id:'bathroom', icon:'🚿', ar:'الحمام', en:'Bathroom',
+    items:[
+      {id:'toilet',    ar:'المرحاض نظيف من الداخل والخارج',      en:'Toilet clean inside and out'},
+      {id:'sink_taps', ar:'الحوض والصنبور نظيفان ولامعان',       en:'Sink and taps clean and shiny'},
+      {id:'shower',    ar:'الدش / البانيو نظيف بدون آثار',       en:'Shower/tub clean with no residue'},
+      {id:'bath_flr',  ar:'أرضية الحمام جافة ونظيفة',           en:'Bathroom floor dry and clean'},
+      {id:'no_hair',   ar:'لا توجد شعرات في أي مكان',           en:'No hair anywhere in bathroom'},
+      {id:'towels',    ar:'المناشف وضعت بشكل صحيح وجديدة',      en:'Towels placed correctly and fresh'},
+      {id:'amenities', ar:'الصابون والشامبو تم تجديدها',         en:'Soap and shampoo restocked'},
+      {id:'no_mildew', ar:'لا رائحة عفن أو رطوبة',              en:'No mildew or damp smell'},
+    ]
+  },
+  {
+    id:'kitchen', icon:'☕', ar:'المطبخ / ركن المشروبات', en:'Kitchen / Kitchenette',
+    items:[
+      {id:'kettle',    ar:'الكيتل نظيف من الداخل والخارج',       en:'Kettle clean inside and outside'},
+      {id:'cups',      ar:'الأكواب غُسلت ومصقولة',              en:'Cups washed and polished'},
+      {id:'fridge',    ar:'الثلاجة فارغة ومنظفة (إن وجدت)',     en:'Fridge emptied and wiped (if present)'},
+      {id:'microwave', ar:'الميكروويف نظيف من الداخل (إن وجد)', en:'Microwave clean inside (if present)'},
+      {id:'counter',   ar:'سطح المطبخ ممسوح ونظيف',             en:'Counter wiped and clean'},
+    ]
+  },
+  {
+    id:'general', icon:'🌟', ar:'العام والنهائي', en:'General & Final Check',
+    items:[
+      {id:'room_smell', ar:'الغرفة تفوح منها رائحة منعشة',         en:'Room smells fresh and pleasant'},
+      {id:'ac_working', ar:'المكيف يعمل وضبط على الدرجة المناسبة', en:'AC working and set to standard temperature'},
+      {id:'no_damage',  ar:'لا يوجد تلف أو أثاث مكسور',           en:'No visible damage or broken furniture'},
+      {id:'trash',      ar:'سلة المهملات فارغة ونظيفة',           en:'Trash bins emptied and clean'},
+    ]
+  }
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let state = {
+  room:'', floor:'', date:'', shift:'', staff:'', role:'',
+  results:{}, notes:{}, photos:{}, photosFullHQ:{},
+  approval:'', totalItems:0, time:''
+};
+
+// ══════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════
+document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
+['roomNumber','floorNumber','inspDate','shiftSelect','staffName','roleSelect'].forEach(id =>
+  document.getElementById(id).addEventListener('input', checkSetupReady)
+);
+
+function selectRole(role) {
+  state.role = role;
+  state._roleTouched = false;
+  checkSetupReady();
+}
+function checkSetupReady() {
+  const role = document.getElementById('roleSelect').value;
+  state.role = role;
+  const ok = document.getElementById('roomNumber').value.trim() &&
+             document.getElementById('staffName').value.trim() &&
+             document.getElementById('shiftSelect').value &&
+             role;
+  document.getElementById('startBtn').disabled = !ok;
+}
+
+function startInspection() {
+  state.room  = document.getElementById('roomNumber').value.trim();
+  state.floor = document.getElementById('floorNumber').value.trim();
+  state.date  = document.getElementById('inspDate').value;
+  state.shift = document.getElementById('shiftSelect').value;
+  state.staff = document.getElementById('staffName').value.trim();
+  const now = new Date();
+  state.time  = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  state.results = {}; state.notes = {}; state.photos = {}; state.photosFullHQ = {};
+  state.approval = '';
+  buildChecklist();
+  showScreen('screenCheck');
+  document.getElementById('headerTitle').textContent = 'غرفة ' + state.room + '  |  Room ' + state.room;
+  document.getElementById('headerSub').textContent = state.staff + ' — ' + state.shift;
+  document.getElementById('progressWrap').style.display = 'block';
+  updateProgress();
+}
+
+// ══════════════════════════════════════════
+// BUILD CHECKLIST
+// ══════════════════════════════════════════
+function buildChecklist() {
+  const wrap = document.getElementById('checklistContent');
+  wrap.innerHTML = '';
+  state.totalItems = 0;
+
+  SECTIONS.forEach(sec => {
+    const sh = document.createElement('div');
+    sh.className = 'section-header';
+    sh.innerHTML = '<span class="section-icon">' + sec.icon + '</span>' + sec.ar + ' &nbsp;|&nbsp; ' + sec.en;
+    wrap.appendChild(sh);
+
+    sec.items.forEach(item => {
+      state.totalItems++;
+      const div = document.createElement('div');
+      div.className = 'check-item';
+      div.id = 'ci_' + item.id;
+      div.innerHTML =
+        '<div class="check-label">' + item.ar + '</div>' +
+        '<div class="check-label-en">' + item.en + '</div>' +
+        '<div class="tap-row">' +
+          '<button class="tap-btn" onclick="setResult(\'' + item.id + '\',\'pass\',this)">' +
+            '<span class="btn-icon">✅</span>ناجح<br><small>Pass</small></button>' +
+          '<button class="tap-btn" onclick="setResult(\'' + item.id + '\',\'fail\',this)">' +
+            '<span class="btn-icon">❌</span>فاشل<br><small>Fail</small></button>' +
+          '<button class="tap-btn" onclick="setResult(\'' + item.id + '\',\'na\',this)">' +
+            '<span class="btn-icon">➖</span>لا ينطبق<br><small>N/A</small></button>' +
+        '</div>' +
+        '<div class="evidence-zone" id="ev_' + item.id + '">' +
+          '<textarea class="note-input" id="note_' + item.id + '" placeholder="ملاحظة / Note (optional)" oninput="state.notes[\'' + item.id + '\']=this.value"></textarea>' +
+          '<div class="photo-row">' +
+            '<label class="photo-upload-btn" for="photo_' + item.id + '">📷 أضف صورة دليل &nbsp;|&nbsp; Add Evidence Photo</label>' +
+            '<input type="file" id="photo_' + item.id + '" accept="image/*" multiple onchange="addPhoto(\'' + item.id + '\',this)">' +
+            '<span class="photo-count-badge" id="pc_' + item.id + '" style="display:none"></span>' +
+          '</div>' +
+          '<div class="thumb-row" id="thumbs_' + item.id + '"></div>' +
+        '</div>';
+      wrap.appendChild(div);
+    });
+  });
+
+  if (state.role === 'supervisor') {
+    document.getElementById('approvalCard').style.display = 'block';
+  } else {
+    document.getElementById('approvalCard').style.display = 'none';
+  }
+}
+
+function setResult(id, result, btn) {
+  state.results[id] = result;
+  const ci = document.getElementById('ci_' + id);
+  ci.querySelectorAll('.tap-btn').forEach(b =>
+    b.classList.remove('pass-active','fail-active','na-active')
+  );
+  btn.classList.add(result + '-active');
+
+  // Always show evidence zone once a result is tapped
+  document.getElementById('ev_' + id).classList.add('visible');
+
+  // Highlight card if fail
+  if (result === 'fail') ci.classList.add('has-fail');
+  else ci.classList.remove('has-fail');
+
+  updateProgress();
+  checkSubmitReady();
+}
+
+function addPhoto(id, input) {
+  if (!input.files.length) return;
+  if (!state.photos[id])       state.photos[id] = [];
+  if (!state.photosFullHQ[id]) state.photosFullHQ[id] = [];
+
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const fullSrc = e.target.result;
+
+      // ── Save full-quality to phone ONLY on mobile
+      if (isMobile) {
+        const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+        const fname = 'GVH_Room' + state.room + '_' + id + '_' + ts + '.jpg';
+        const dlLink = document.createElement('a');
+        dlLink.href = fullSrc;
+        dlLink.download = fname;
+        dlLink.style.display = 'none';
+        document.body.appendChild(dlLink);
+        dlLink.click();
+        document.body.removeChild(dlLink);
+        state.photosFullHQ[id].push({ src: fullSrc, name: fname });
+      } else {
+        state.photosFullHQ[id].push({ src: fullSrc, name: file.name });
+      }
+
+      // ── Compress for PDF (max 1200px wide, quality 0.80)
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        const scale = img.width > MAX ? MAX / img.width : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.80);
+
+        // Capture index AFTER pushing
+        state.photos[id].push(compressed);
+        const idx = state.photos[id].length - 1;
+
+        const pc = document.getElementById('pc_' + id);
+        pc.style.display = 'inline-block';
+        pc.textContent = state.photos[id].length + ' صورة / photo(s)';
+
+        const thumbs = document.getElementById('thumbs_' + id);
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrap';
+        const thumb = document.createElement('img');
+        thumb.src = compressed;
+        thumb.className = 'thumb';
+        thumb.alt = 'evidence';
+        thumb.onclick = () => openLightbox(id, idx);
+        const del = document.createElement('button');
+        del.className = 'thumb-del';
+        del.textContent = '✕';
+        del.onclick = () => removePhoto(id, idx, wrap);
+        wrap.appendChild(thumb);
+        wrap.appendChild(del);
+        thumbs.appendChild(wrap);
+      };
+      img.src = fullSrc;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(id, idx, wrapEl) {
+  state.photos[id].splice(idx, 1);
+  wrapEl.remove();
+  const pc = document.getElementById('pc_' + id);
+  if (state.photos[id].length === 0) { pc.style.display = 'none'; }
+  else { pc.textContent = state.photos[id].length + ' صورة / photo(s)'; }
+  // Re-index remaining thumbnails
+  const thumbs = document.getElementById('thumbs_' + id);
+  thumbs.querySelectorAll('.thumb-wrap').forEach((w, i) => {
+    w.querySelector('.thumb').setAttribute('onclick', 'openLightbox(\'' + id + '\',' + i + ')');
+    w.querySelector('.thumb-del').setAttribute('onclick', 'removePhoto(\'' + id + '\',' + i + ',this.parentNode)');
+  });
+}
+
+function openLightbox(id, idx) {
+  // Show full-quality version in lightbox if available, otherwise compressed
+  const src = (state.photosFullHQ[id] && state.photosFullHQ[id][idx])
+    ? state.photosFullHQ[id][idx].src
+    : state.photos[id][idx];
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function setApproval(val, btn) {
+  state.approval = val;
+  document.querySelectorAll('.appr-btn').forEach(b =>
+    b.classList.remove('approved-active','reclean-active','notready-active')
+  );
+  btn.classList.add(val + '-active');
+  checkSubmitReady();
+}
+
+function updateProgress() {
+  const done = Object.keys(state.results).length;
+  const pct = state.totalItems ? Math.round((done / state.totalItems) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' / ' + state.totalItems + '  (' + pct + '%)';
+}
+
+function checkSubmitReady() {
+  const allAnswered = Object.keys(state.results).length === state.totalItems;
+  const approvalOk  = (state.role !== 'supervisor') || state.approval;
+  document.getElementById('submitBtn').disabled = !(allAnswered && approvalOk);
+}
+
+// ══════════════════════════════════════════
+// SUBMIT → REPORT
+// ══════════════════════════════════════════
+function submitReport() {
+  // Capture submission time
+  const submitNow = new Date();
+  state.submitTime = submitNow.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+
+  let pass=0, fail=0, na=0;
+  const failItems = [];
+
+  SECTIONS.forEach(sec => {
+    sec.items.forEach(item => {
+      const r = state.results[item.id];
+      if (r === 'pass') pass++;
+      else if (r === 'fail') {
+        fail++;
+        failItems.push({ ...item, note: state.notes[item.id]||'', photos: state.photos[item.id]||[] });
+      }
+      else if (r === 'na') na++;
+    });
+  });
+
+  document.getElementById('rptRoomTitle').textContent = 'Room ' + state.room + (state.floor ? '  —  Floor ' + state.floor : '');
+  document.getElementById('rptMeta').textContent = state.date + '  |  Started: ' + state.time + '  |  Submitted: ' + state.submitTime + '  |  ' + state.shift + '  |  ' + state.staff + '  |  ' + (state.role==='supervisor'?'Supervisor':'Cleaner');
+
+  const statusMap = {
+    approved:{ en:'✅ APPROVED', ar:'معتمدة – جاهزة للنزيل', cls:'approved' },
+    reclean: { en:'🔄 RE-CLEAN NEEDED', ar:'تحتاج إعادة تنظيف', cls:'reclean' },
+    notready:{ en:'🚫 NOT READY', ar:'غير جاهزة', cls:'notready' },
+    '':      { en:'📋 SUBMITTED', ar:'تم الإرسال', cls:'approved' }
+  };
+  const st = statusMap[state.approval] || statusMap[''];
+  const rptStatus = document.getElementById('rptStatus');
+  rptStatus.textContent = st.en;
+  rptStatus.className = 'report-status ' + st.cls;
+  document.getElementById('rptStatusAr').textContent = st.ar;
+  document.getElementById('rptPass').textContent = pass;
+  document.getElementById('rptFail').textContent = fail;
+  document.getElementById('rptNA').textContent = na;
+
+  const issuesWrap = document.getElementById('rptIssues');
+  if (failItems.length) {
+    issuesWrap.innerHTML = '<div class="section-divider">المشاكل المكتشفة &nbsp;|&nbsp; Issues Found</div>';
+    failItems.forEach(i => {
+      const div = document.createElement('div');
+      div.className = 'issue-item';
+      div.innerHTML = '<strong>' + i.ar + '</strong>' + i.en +
+        (i.note ? '<br><em style="font-size:13px;color:#555">📝 ' + i.note + '</em>' : '');
+      if (i.photos.length) {
+        const pr = document.createElement('div');
+        pr.className = 'issue-photos';
+        i.photos.forEach((src, idx) => {
+          const img = document.createElement('img');
+          img.src = src; img.className = 'issue-photo';
+          img.onclick = () => { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.add('open'); };
+          pr.appendChild(img);
+        });
+        div.appendChild(pr);
+      }
+      issuesWrap.appendChild(div);
+    });
+  } else {
+    issuesWrap.innerHTML = '<div style="text-align:center;padding:14px;color:var(--pass);font-weight:600">لا توجد مشاكل ✅ | No issues found</div>';
+  }
+
+  showScreen('screenReport');
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('headerTitle').textContent = 'تقرير الغرفة ' + state.room + '  |  Room Report';
+  document.getElementById('headerSub').textContent = 'Golden Vision Hotel';
+}
+
+// ══════════════════════════════════════════
+// WHATSAPP — pure English to avoid RTL issues in URL
+// ══════════════════════════════════════════
+function shareWhatsApp() {
+  const pass = document.getElementById('rptPass').textContent;
+  const fail = document.getElementById('rptFail').textContent;
+  const na   = document.getElementById('rptNA').textContent;
+
+  const statusEn = { approved:'APPROVED - Ready for Guest', reclean:'RE-CLEAN NEEDED', notready:'NOT READY', '':'SUBMITTED' }[state.approval] || 'SUBMITTED';
+  const statusEmoji = { approved:'✅', reclean:'🔄', notready:'🚫', '':'📋' }[state.approval] || '📋';
+  const shiftMap = { Morning:'Morning / Sabah', Evening:'Evening / Masaa', Night:'Night / Layl' };
+  const roleEn   = state.role === 'supervisor' ? 'Supervisor' : 'Cleaner';
+
+  const failLines = [];
+  SECTIONS.forEach(sec => {
+    sec.items.forEach(item => {
+      if (state.results[item.id] === 'fail') {
+        const note = state.notes[item.id] ? ' -- Note: ' + state.notes[item.id] : '';
+        const photoCount = (state.photos[item.id]||[]).length;
+        const photoNote = photoCount ? ' (' + photoCount + ' photo(s) in PDF)' : '';
+        failLines.push('  ❌ ' + item.en + note + photoNote);
+      }
+    });
+  });
+
+  let msg = '🏨 *GOLDEN VISION HOTEL - Room Inspection Report*\n';
+  msg += '------------------------------------\n';
+  msg += '🚪 Room: ' + state.room + (state.floor ? '  |  Floor: ' + state.floor : '') + '\n';
+  msg += '📅 Date: ' + state.date + '\n';
+  msg += '🕐 Started: ' + state.time + '  |  Submitted: ' + (state.submitTime||'-') + '\n';
+  msg += '⏰ Shift: ' + (shiftMap[state.shift] || state.shift) + '\n';
+  msg += '👤 Staff: ' + state.staff + '\n';
+  msg += '🏷 Role: ' + roleEn + '\n';
+  msg += '------------------------------------\n';
+  msg += statusEmoji + ' *STATUS: ' + statusEn + '*\n';
+  msg += '✅ Pass: ' + pass + '  |  ❌ Fail: ' + fail + '  |  ➖ N/A: ' + na + '\n';
+  if (failLines.length) {
+    msg += '\n⚠ *ISSUES FOUND:*\n' + failLines.join('\n') + '\n';
+  }
+  msg += '------------------------------------\n';
+  msg += '_Auto-generated - Golden Vision Room Inspection_';
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ══════════════════════════════════════════
+// PDF — English only (jsPDF does not support Arabic)
+// ══════════════════════════════════════════
+function downloadPDF() {
+  try {
+    generatePDF();
+  } catch(e) {
+    alert('PDF error: ' + e.message + '\nPlease try again or use WhatsApp to share the report.');
+  }
+}
+
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const pw = 210, ph = 297;
+  let y = 0;
+
+  // ── Header
+  doc.setFillColor(26,58,92);
+  doc.rect(0,0,pw,40,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20); doc.setFont('helvetica','bold');
+  doc.text('Golden Vision Hotel', pw/2, 14, {align:'center'});
+  doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.text('Room Inspection Report', pw/2, 22, {align:'center'});
+
+  const statusLabel = {approved:'APPROVED',reclean:'RE-CLEAN NEEDED',notready:'NOT READY','':'SUBMITTED'}[state.approval]||'SUBMITTED';
+  const statusRGB   = {approved:[34,139,34],reclean:[200,140,0],notready:[200,40,40],'':  [34,139,34]}[state.approval]||[34,139,34];
+  doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.setTextColor(...statusRGB);
+  doc.text(statusLabel, pw/2, 33, {align:'center'});
+
+  y = 48;
+  doc.setTextColor(30,30,30);
+
+  // ── Meta info
+  const shiftDisplay = {Morning:'Morning',Evening:'Evening',Night:'Night'}[state.shift]||state.shift;
+  const meta = [
+    ['Room', state.room],         ['Floor', state.floor||'-'],
+    ['Date', state.date],         ['Shift', shiftDisplay],
+    ['Started', state.time],      ['Submitted', state.submitTime||'-'],
+    ['Staff', state.staff],       ['Role', state.role==='supervisor'?'Supervisor':'Cleaner']
+  ];
+  doc.setFontSize(9);
+  meta.forEach((row, i) => {
+    const col = i % 2; const ri = Math.floor(i/2);
+    const x = col === 0 ? 14 : 110;
+    const yy = y + ri * 7;
+    doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
+    doc.text(row[0] + ':', x, yy);
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+    doc.text(String(row[1]), x + 26, yy);
+  });
+  y += 33;
+
+  // ── Summary boxes
+  const passN = +document.getElementById('rptPass').textContent;
+  const failN = +document.getElementById('rptFail').textContent;
+  const naN   = +document.getElementById('rptNA').textContent;
+  const bW=54, bH=16, bGap=6, bStart=(pw-(bW*3+bGap*2))/2;
+  [[passN,'PASS',[34,139,34]],[failN,'FAIL',[180,30,30]],[naN,'N/A',[100,100,100]]].forEach(([n,l,c],i) => {
+    const bx = bStart + i*(bW+bGap);
+    doc.setFillColor(...c);
+    doc.roundedRect(bx,y,bW,bH,3,3,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text(String(n), bx+bW/2, y+8, {align:'center'});
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(l, bx+bW/2, y+13, {align:'center'});
+  });
+  y += 22;
+
+  // ── Sections
+  SECTIONS.forEach(sec => {
+    if (y > ph-30) { doc.addPage(); y = 16; }
+    doc.setFillColor(26,58,92);
+    doc.rect(10,y,pw-20,9,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text(sec.en, 14, y+6.2);
+    y += 12;
+
+    sec.items.forEach(item => {
+      if (y > ph-20) { doc.addPage(); y = 16; }
+      const r = state.results[item.id]||'-';
+      const rColor = r==='pass'?[34,139,34]:r==='fail'?[180,30,30]:[100,100,100];
+      const rLabel = r==='pass'?'PASS':r==='fail'?'FAIL':r==='na'?'N/A':'-';
+
+      doc.setDrawColor(220,220,220); doc.line(10,y,pw-10,y);
+      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      doc.text(item.en, 14, y+5.5);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...rColor);
+      doc.text(rLabel, pw-14, y+5.5, {align:'right'});
+      y += 8;
+
+      if (r === 'fail') {
+        if (state.notes[item.id]) {
+          if (y > ph-12) { doc.addPage(); y = 16; }
+          doc.setTextColor(120,60,60); doc.setFontSize(8); doc.setFont('helvetica','italic');
+          const noteLines = doc.splitTextToSize('Note: ' + state.notes[item.id], pw-36);
+          doc.text(noteLines, 18, y+4);
+          y += noteLines.length * 5 + 2;
+        }
+      }
+
+      // Show photos for ANY item that has them (pass or fail)
+      const photos = state.photos[item.id] || [];
+      if (photos.length) {
+        if (y > ph-50) { doc.addPage(); y = 16; }
+        const imgW = 55, imgH = 42, gap = 5;
+        let px = 14;
+        photos.forEach((src) => {
+          if (!src || src.length < 50) return;
+          if (px + imgW > pw - 14) { px = 14; y += imgH + gap; }
+          if (y > ph - 50) { doc.addPage(); y = 16; px = 14; }
+          try {
+            // Determine format from data URI
+            const fmt = src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(src, fmt, px, y, imgW, imgH, undefined, 'FAST');
+            px += imgW + gap;
+          } catch(imgErr) {
+            // Draw placeholder box if image fails
+            doc.setDrawColor(200,200,200);
+            doc.setFillColor(245,245,245);
+            doc.rect(px, y, imgW, imgH, 'FD');
+            doc.setTextColor(150,150,150); doc.setFontSize(7);
+            doc.text('Photo', px + imgW/2, y + imgH/2, {align:'center'});
+            px += imgW + gap;
+          }
+        });
+        y += imgH + gap + 2;
+      }
+    });
+    y += 3;
+  });
+
+  // ── Footer
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(26,58,92);
+    doc.rect(0,ph-13,pw,13,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('Golden Vision Hotel  –  Confidential Quality Report', pw/2, ph-5.5, {align:'center'});
+    doc.text('Page ' + p + ' of ' + pages, pw-14, ph-5.5, {align:'right'});
+  }
+
+  doc.save('GVH_Room_' + state.room + '_' + state.date + '_' + (state.time||'').replace(':','h') + '.pdf');
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function newInspection() {
+  showScreen('screenSetup');
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('headerTitle').textContent = 'فحص الغرف | Room Inspection';
+  document.getElementById('headerSub').textContent = 'نظام ضمان الجودة';
+  document.getElementById('roleSelect').value = '';
+  state.role = '';
+  state._roleTouched = false;
+  checkSetupReady();
+}
+</script>
+</body>
+</html>

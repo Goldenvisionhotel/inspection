@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Golden Vision Hotel – Room Inspection</title>
+<title>Golden Vision Hotel – Inspection</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="amiri-font.js"></script>
 <style>
   :root {
     --gold: #B8960C;
@@ -45,13 +46,8 @@
   .setup-card h2 { font-size: 17px; color: var(--blue); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1.5px solid var(--gold-light); }
   .field-label { font-size: 14px; color: var(--text-muted); margin-bottom: 6px; display: block; }
   .field-label span { font-size: 12px; }
-  input[type="text"], input[type="date"], select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 16px; color: var(--text); background: #FAFAFA; margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
-  input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: var(--blue-mid); background: #fff; }
-
-  .role-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .role-btn { padding: 14px 10px; border: 2px solid var(--border); border-radius: 10px; background: #FAFAFA; font-size: 15px; font-weight: 600; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; -webkit-tap-highlight-color: rgba(46,109,164,0.15); user-select: none; -webkit-user-select: none; }
-  .role-btn.selected { border-color: var(--blue-mid); background: var(--blue-light); color: var(--blue); }
-  .role-btn .role-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  input[type="text"], input[type="tel"], input[type="date"], select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 16px; color: var(--text); background: #FAFAFA; margin-bottom: 14px; outline: none; transition: border-color 0.15s; font-family: inherit; }
+  input:focus, select:focus { border-color: var(--blue-mid); background: #fff; }
 
   .start-btn { width: 100%; padding: 16px; background: var(--blue); color: #fff; border: none; border-radius: 10px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background 0.15s; }
   .start-btn:hover { background: var(--blue-mid); }
@@ -72,7 +68,6 @@
   .tap-btn.fail-active { background: var(--fail-bg); border-color: var(--fail); color: var(--fail); }
   .tap-btn.na-active { background: var(--na-bg); border-color: #999; color: var(--na); }
 
-  /* Evidence section — always visible after result tapped */
   .evidence-zone { display: none; border-top: 1px dashed #DDD; padding-top: 10px; margin-top: 2px; }
   .evidence-zone.visible { display: block; }
 
@@ -89,10 +84,8 @@
   .thumb-del { position: absolute; top: -5px; left: -5px; width: 18px; height: 18px; background: var(--fail); color: #fff; border: none; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
   .photo-count-badge { font-size: 12px; color: var(--pass); font-weight: 700; background: var(--pass-bg); padding: 3px 8px; border-radius: 20px; }
 
-  /* Fail highlight */
   .check-item.has-fail { border-right: 4px solid var(--fail); }
 
-  /* Lightbox */
   #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 999; align-items: center; justify-content: center; }
   #lightbox.open { display: flex; }
   #lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 8px; }
@@ -111,7 +104,6 @@
   .submit-btn:hover { background: var(--gold); }
   .submit-btn:disabled { background: #B0B0B0; cursor: not-allowed; }
 
-  /* Report */
   .report-header { background: var(--blue); color: #fff; border-radius: var(--radius); padding: 20px; text-align: center; margin-bottom: 14px; }
   .report-status { font-size: 26px; font-weight: 800; margin: 8px 0 4px; }
   .report-status.approved { color: #7FFFA8; }
@@ -136,11 +128,54 @@
   .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 8px; }
   .action-btn { padding: 15px 10px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; text-align: center; border: none; transition: opacity 0.15s; }
   .action-btn:hover { opacity: 0.88; }
-  .btn-whatsapp { background: #25D366; color: #fff; }
+  .btn-share    { background: #25D366; color: #fff; grid-column: 1 / -1; }
+  .btn-whatsapp { background: #128C7E; color: #fff; }
   .btn-pdf      { background: var(--blue); color: #fff; }
   .btn-new      { background: #fff; color: var(--blue); border: 2px solid var(--blue); grid-column: 1 / -1; }
 
-  .pdf-note { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 6px; background: var(--gold-light); border-radius: 8px; padding: 8px 12px; }
+  .pdf-note { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 6px; background: var(--gold-light); border-radius: 8px; padding: 8px 12px; line-height: 1.5; }
+
+  /* ── Assignment screen (supervisors only) ── */
+  .assign-btn { width: 100%; padding: 14px; background: #fff; color: var(--gold-dark); border: 2px solid var(--gold-dark); border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+  .assign-btn:hover { background: var(--gold-light); }
+  .pick-list { border: 1.5px solid var(--border); border-radius: 10px; max-height: 260px; overflow-y: auto; background: #FAFAFA; margin-bottom: 14px; }
+  .pick-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-bottom: 1px solid #ECECEC; cursor: pointer; font-size: 14px; user-select: none; -webkit-user-select: none; }
+  .pick-row:last-child { border-bottom: none; }
+  .pick-row.on { background: var(--blue-light); color: var(--blue); font-weight: 600; }
+  .pick-box { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; background: #fff; }
+  .pick-row.on .pick-box { background: var(--blue-mid); border-color: var(--blue-mid); }
+  .pick-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+  .room-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; background: #FAFAFA; margin-bottom: 14px; max-height: 210px; overflow-y: auto; }
+  .room-chip { padding: 7px 11px; border: 1.5px solid var(--border); border-radius: 20px; background: #fff; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .room-chip.on { background: var(--blue-mid); border-color: var(--blue-mid); color: #fff; }
+  .chip-floor-lbl { width: 100%; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  .assign-preview { background: #fff; border: 1.5px dashed var(--border); border-radius: 10px; padding: 12px; font-size: 12px; white-space: pre-wrap; word-break: break-word; color: var(--text-muted); max-height: 220px; overflow-y: auto; margin-bottom: 12px; direction: ltr; text-align: left; font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  .assigned-banner { background: var(--gold-light); border: 1.5px solid var(--gold); border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600; color: var(--gold-dark); margin-bottom: 14px; }
+
+  /* ── Maintenance log ── */
+  .warn-box { background: #FFF4E5; border: 1.5px solid #C97A00; border-radius: 10px; padding: 11px 13px; font-size: 12px; color: #7A4A00; line-height: 1.6; margin-bottom: 14px; }
+  .maint-row { background: var(--surface); border-radius: 10px; padding: 13px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-right: 4px solid var(--border); }
+  .maint-row.overdue { border-right-color: var(--fail); background: var(--fail-bg); }
+  .maint-row.soon    { border-right-color: #C97A00; background: #FFF8EE; }
+  .maint-row.ok      { border-right-color: var(--pass); }
+  .maint-row.never   { border-right-color: #999; }
+  .maint-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .maint-en { font-size: 12px; color: var(--text-muted); font-style: italic; margin-bottom: 8px; }
+  .maint-dates { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; margin-bottom: 9px; }
+  .maint-pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .pill-overdue { background: var(--fail); color: #fff; }
+  .pill-soon    { background: #C97A00; color: #fff; }
+  .pill-ok      { background: var(--pass); color: #fff; }
+  .pill-never   { background: #888; color: #fff; }
+  .maint-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+  .maint-done-btn { padding: 10px; border: 2px solid var(--pass); background: var(--pass-bg); color: var(--pass); border-radius: 9px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .maint-date-btn { padding: 10px 12px; border: 1.5px solid var(--border); background: #FAFAFA; color: var(--text-muted); border-radius: 9px; font-size: 13px; cursor: pointer; }
+  .overdue-summary { background: var(--blue); color: #fff; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; font-size: 14px; line-height: 1.6; }
+  .overdue-summary strong { color: #FFD97A; font-size: 18px; }
+  .overdue-item { background: #fff; border-radius: 8px; padding: 9px 12px; margin-bottom: 6px; font-size: 13px; border-right: 4px solid var(--fail); }
 
   @media (max-width: 400px) {
     .tap-btn { font-size: 13px; padding: 11px 2px; }
@@ -152,7 +187,7 @@
 
 <div class="header" id="mainHeader">
   <div class="header-logo">Golden Vision Hotel</div>
-  <div class="header-title" id="headerTitle">فحص الغرف | Room Inspection</div>
+  <div class="header-title" id="headerTitle">فحص الجودة | Quality Inspection</div>
   <div class="header-sub" id="headerSub">نظام ضمان الجودة</div>
   <div class="progress-bar-wrap" id="progressWrap" style="display:none">
     <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
@@ -160,7 +195,6 @@
   <div class="progress-text" id="progressText"></div>
 </div>
 
-<!-- Lightbox -->
 <div id="lightbox">
   <button id="lightbox-close" onclick="document.getElementById('lightbox').classList.remove('open')">✕</button>
   <img id="lightbox-img" src="" alt="evidence photo">
@@ -169,14 +203,26 @@
 <!-- ══ SCREEN 1: SETUP ══ -->
 <div class="screen active" id="screenSetup">
   <div class="setup-card">
-    <h2>📋 بدء فحص الغرفة &nbsp;|&nbsp; Start Inspection</h2>
-    <label class="field-label">رقم الغرفة &nbsp;<span>Room Number</span></label>
-    <select id="roomNumber" onchange="roomChanged()">
-      <option value="">اختر الغرفة / Select Room...</option>
+    <h2>📋 بدء الفحص &nbsp;|&nbsp; Start Inspection</h2>
+
+    <div class="assigned-banner" id="assignedBanner" style="display:none"></div>
+
+    <label class="field-label">المنطقة &nbsp;<span>Area</span></label>
+    <select id="areaSelect" onchange="areaChanged()">
+      <option value="">اختر المنطقة / Select Area...</option>
     </select>
-    <div id="floorDisplay" style="display:none; margin:-6px 0 14px; padding:9px 14px; border-radius:8px; font-size:14px; font-weight:600; background:var(--blue-light); color:var(--blue);"></div>
+
+    <div id="roomWrap" style="display:none">
+      <label class="field-label">رقم الغرفة &nbsp;<span>Room Number</span></label>
+      <select id="roomNumber" onchange="roomChanged()">
+        <option value="">اختر الغرفة / Select Room...</option>
+      </select>
+      <div id="floorDisplay" style="display:none; margin:-6px 0 14px; padding:9px 14px; border-radius:8px; font-size:14px; font-weight:600; background:var(--blue-light); color:var(--blue);"></div>
+    </div>
+
     <label class="field-label">التاريخ &nbsp;<span>Date</span></label>
     <input type="date" id="inspDate">
+
     <label class="field-label">الوردية &nbsp;<span>Shift</span></label>
     <select id="shiftSelect">
       <option value="">اختر / Select...</option>
@@ -184,13 +230,67 @@
       <option value="Evening">مساء / Evening</option>
       <option value="Night">ليل / Night</option>
     </select>
+
     <label class="field-label">الرقم السري للموظف &nbsp;<span>Staff PIN</span></label>
     <input type="tel" id="staffPin" placeholder="أدخل رقمك السري / Enter your PIN" maxlength="6" autocomplete="off" oninput="checkPin()">
     <div id="pinStatus" style="display:none; margin:-6px 0 14px; padding:10px 14px; border-radius:8px; font-size:14px; font-weight:600;"></div>
+
     <button class="start-btn" id="startBtn" onclick="startInspection()" disabled>
       ابدأ الفحص &nbsp;|&nbsp; Start ➜
     </button>
+
+    <button class="assign-btn" id="assignBtn" onclick="openAssign()" style="display:none">
+      📤 توزيع المهام على العمال &nbsp;|&nbsp; Assign Work to Cleaners
+    </button>
+
+    <button class="assign-btn" id="maintBtn" onclick="openMaint()" style="display:none; border-color:var(--blue-mid); color:var(--blue-mid)">
+      🛠️ سجل صيانة الغرف &nbsp;|&nbsp; Room Maintenance Log
+    </button>
   </div>
+</div>
+
+<!-- ══ SCREEN 4: ASSIGN WORK (supervisors only) ══ -->
+<div class="screen" id="screenAssign">
+  <div class="setup-card">
+    <h2>📤 توزيع المهام &nbsp;|&nbsp; Assign Work</h2>
+
+    <label class="field-label">1. اختر المناطق &nbsp;<span>Select areas</span></label>
+    <div class="pick-list" id="assignAreas"></div>
+
+    <div id="assignRoomsWrap" style="display:none">
+      <label class="field-label">أرقام الغرف &nbsp;<span>Room numbers</span></label>
+      <div class="room-chips" id="assignRooms"></div>
+    </div>
+
+    <label class="field-label">2. اختر العمال &nbsp;<span>Select staff</span></label>
+    <div class="pick-list" id="assignStaff"></div>
+
+    <label class="field-label">3. التاريخ &nbsp;<span>Date</span></label>
+    <input type="date" id="assignDate">
+
+    <label class="field-label">الوردية &nbsp;<span>Shift</span></label>
+    <select id="assignShift" onchange="renderAssignPreview()">
+      <option value="">اختر / Select...</option>
+      <option value="Morning">صباح / Morning</option>
+      <option value="Evening">مساء / Evening</option>
+      <option value="Night">ليل / Night</option>
+    </select>
+
+    <label class="field-label">معاينة الرسالة &nbsp;<span>Message preview</span></label>
+    <div class="assign-preview" id="assignPreview">—</div>
+
+    <button class="start-btn" id="assignSendBtn" onclick="sendAssignment()" disabled
+            style="background:#25D366">
+      📤 إرسال عبر واتساب &nbsp;|&nbsp; Send via WhatsApp
+    </button>
+    <button class="assign-btn" onclick="copyAssignment()" style="border-color:var(--blue);color:var(--blue)">
+      📋 نسخ النص &nbsp;|&nbsp; Copy Message
+    </button>
+    <button class="assign-btn" onclick="closeAssign()" style="border-color:#999;color:#555">
+      ← رجوع &nbsp;|&nbsp; Back
+    </button>
+  </div>
+  <div style="height:24px"></div>
 </div>
 
 <!-- ══ SCREEN 2: CHECKLIST ══ -->
@@ -220,7 +320,7 @@
 <div class="screen" id="screenReport">
   <div class="report-header">
     <div style="font-size:13px;opacity:0.7">Golden Vision Hotel</div>
-    <div style="font-size:20px;font-weight:700;margin:6px 0 2px" id="rptRoomTitle">غرفة —</div>
+    <div style="font-size:20px;font-weight:700;margin:6px 0 2px" id="rptAreaTitle">—</div>
     <div style="font-size:13px;opacity:0.7" id="rptMeta"></div>
     <div class="report-status" id="rptStatus"></div>
     <div id="rptStatusAr" style="font-size:14px;opacity:0.85;margin-top:2px"></div>
@@ -232,25 +332,55 @@
   </div>
   <div id="rptIssues"></div>
   <div class="action-row">
-    <button class="action-btn btn-whatsapp" onclick="shareWhatsApp()">📤 واتساب<br><small>WhatsApp</small></button>
-    <button class="action-btn btn-pdf"      onclick="downloadPDF()">📄 PDF<br><small>Download</small></button>
+    <button class="action-btn btn-share" id="shareFileBtn" onclick="sharePDFFile()" style="display:none">📎 أرسل ملف PDF &nbsp;|&nbsp; Share PDF File</button>
+    <button class="action-btn btn-whatsapp" onclick="shareWhatsApp()">💬 نص واتساب<br><small>WhatsApp Text</small></button>
+    <button class="action-btn btn-pdf"      onclick="downloadPDF()">📄 تحميل PDF<br><small>Download</small></button>
     <button class="action-btn btn-new"      onclick="newInspection()">＋ فحص جديد &nbsp;|&nbsp; New Inspection</button>
   </div>
-  <div class="pdf-note">💡 <strong>Photos:</strong> On mobile, full-quality originals save to your phone automatically. On desktop, originals stay in the browser. Compressed copies always appear in the PDF.<br>على الجوال: الصور الأصلية تُحفظ تلقائياً. على الكمبيوتر: تبقى في المتصفح. النسخ المضغوطة تظهر دائماً في PDF.</div>
+  <div class="pdf-note">💡 التقرير PDF ثنائي اللغة — الإنجليزية يسار والعربية يمين، مع الصور.<br>Bilingual PDF — English left, Arabic right, photos included.</div>
+  <div style="height:24px"></div>
+</div>
+
+<!-- ══ SCREEN 5: MAINTENANCE LOG ══ -->
+<div class="screen" id="screenMaint">
+  <div class="setup-card" style="padding:18px 16px">
+    <h2>🛠️ سجل صيانة الغرف &nbsp;|&nbsp; Room Maintenance</h2>
+
+    <div class="warn-box">
+      ⚠ هذا السجل محفوظ على هذا الجهاز فقط. استخدم زر النسخ الاحتياطي بانتظام.<br>
+      This log is stored on <strong>this device only</strong>. It is not shared between phones and
+      is lost if browser data is cleared. Use Backup regularly, and keep the PDFs as the real record.
+    </div>
+
+    <div id="overdueSummary"></div>
+
+    <label class="field-label">الغرفة &nbsp;<span>Room</span></label>
+    <select id="maintRoom" onchange="renderMaint()">
+      <option value="">اختر الغرفة / Select Room...</option>
+    </select>
+  </div>
+
+  <div id="maintList"></div>
+
+  <div class="action-row" style="max-width:600px;margin:14px auto 8px">
+    <button class="action-btn btn-pdf" onclick="maintPDF()">📄 تقرير PDF<br><small>PDF Record</small></button>
+    <button class="action-btn" style="background:var(--gold-dark);color:#fff" onclick="maintICS()">📅 التقويم<br><small>Add to Calendar</small></button>
+    <button class="action-btn" style="background:#fff;color:var(--blue);border:2px solid var(--blue)" onclick="maintBackup()">💾 نسخة احتياطية<br><small>Backup</small></button>
+    <button class="action-btn" style="background:#fff;color:var(--blue);border:2px solid var(--blue)" onclick="document.getElementById('maintRestoreFile').click()">📂 استعادة<br><small>Restore</small></button>
+    <input type="file" id="maintRestoreFile" accept="application/json,.json" onchange="maintRestore(this)">
+    <button class="action-btn btn-new" onclick="closeMaint()">← رجوع &nbsp;|&nbsp; Back</button>
+  </div>
   <div style="height:24px"></div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════
 // ═════════════════════════════════════════════════════════
 // STAFF LIST — EDIT HERE to add/remove staff or change PINs
 // role must be exactly: 'cleaner' or 'supervisor'
 // ═════════════════════════════════════════════════════════
 const STAFF = [
   { pin: '1111', name: 'Jahid',    role: 'cleaner'    },
-  { pin: '2222', name: 'Rahim',    role: 'cleaner'    },
+  { pin: '2222', name: 'Kareem',   role: 'cleaner'    },
   { pin: '1010', name: 'Amin',     role: 'cleaner'    },
   { pin: '9999', name: 'Mohammed', role: 'supervisor' },
   { pin: '2580', name: 'Turki',    role: 'supervisor' },
@@ -267,79 +397,425 @@ const FLOORS = [
   { floor: '3', ar: 'الطابق الثالث', en: 'Third Floor',  from: 301, to: 319 },
 ];
 
-const SECTIONS = [
-  {
-    id:'entrance', icon:'🚪', ar:'المدخل والصالة', en:'Entrance & Living Area',
-    items:[
-      {id:'floor_clean', ar:'الأرضية نظيفة ومكنوسة',                  en:'Floor swept and clean'},
-      {id:'floor_smell', ar:'لا رائحة كريهة من المكنسة أو الممسحة',   en:'No bad smell from mop or cleaning tools'},
-      {id:'under_furn',  ar:'تحت الأثاث نظيف (لا أوساخ مخفية)',       en:'Under furniture is clean (no hidden dirt)'},
-      {id:'sofa_clean',  ar:'الكنب والوسائد نظيفة وبدون أثر',          en:'Sofa and cushions clean and stain-free'},
-      {id:'table_clean', ar:'الطاولات ممسوحة من الأعلى والأسفل',       en:'Tables wiped top and underneath'},
-      {id:'no_leftover', ar:'لا توجد مقتنيات للنزيل السابق',           en:'No belongings left from previous guest'},
-      {id:'curtains',    ar:'الستائر مرتبة وسليمة',                    en:'Curtains straightened and intact'},
-    ]
-  },
-  {
-    id:'bedroom', icon:'🛏️', ar:'غرفة النوم', en:'Bedroom',
-    items:[
-      {id:'bed_made',  ar:'السرير مرتب بشكل صحيح',              en:'Bed properly made'},
-      {id:'under_bed', ar:'تحت السرير نظيف',                    en:'Under the bed is clean'},
-      {id:'wardrobe',  ar:'الخزانة فارغة ونظيفة من الداخل',     en:'Wardrobe empty and clean inside'},
-      {id:'mirror',    ar:'المرايا نظيفة بدون بصمات',           en:'Mirrors clean with no fingerprints'},
-      {id:'bedside',   ar:'طاولة السرير ممسوحة',                en:'Bedside table wiped'},
-      {id:'lamps',     ar:'الإضاءة تعمل بشكل سليم',             en:'All lights working'},
-    ]
-  },
-  {
-    id:'bathroom', icon:'🚿', ar:'الحمام', en:'Bathroom',
-    items:[
-      {id:'toilet',    ar:'المرحاض نظيف من الداخل والخارج',      en:'Toilet clean inside and out'},
-      {id:'sink_taps', ar:'الحوض والصنبور نظيفان ولامعان',       en:'Sink and taps clean and shiny'},
-      {id:'shower',    ar:'الدش / البانيو نظيف بدون آثار',       en:'Shower/tub clean with no residue'},
-      {id:'bath_flr',  ar:'أرضية الحمام جافة ونظيفة',           en:'Bathroom floor dry and clean'},
-      {id:'no_hair',   ar:'لا توجد شعرات في أي مكان',           en:'No hair anywhere in bathroom'},
-      {id:'towels',    ar:'المناشف وضعت بشكل صحيح وجديدة',      en:'Towels placed correctly and fresh'},
-      {id:'amenities', ar:'الصابون والشامبو تم تجديدها',         en:'Soap and shampoo restocked'},
-      {id:'no_mildew', ar:'لا رائحة عفن أو رطوبة',              en:'No mildew or damp smell'},
-    ]
-  },
-  {
-    id:'kitchen', icon:'☕', ar:'المطبخ / ركن المشروبات', en:'Kitchen / Kitchenette',
-    items:[
-      {id:'kettle',    ar:'الكيتل نظيف من الداخل والخارج',       en:'Kettle clean inside and outside'},
-      {id:'cups',      ar:'الأكواب غُسلت ومصقولة',              en:'Cups washed and polished'},
-      {id:'fridge',    ar:'الثلاجة فارغة ومنظفة (إن وجدت)',     en:'Fridge emptied and wiped (if present)'},
-      {id:'microwave', ar:'الميكروويف نظيف من الداخل (إن وجد)', en:'Microwave clean inside (if present)'},
-      {id:'counter',   ar:'سطح المطبخ ممسوح ونظيف',             en:'Counter wiped and clean'},
-    ]
-  },
-  {
-    id:'general', icon:'🌟', ar:'العام والنهائي', en:'General & Final Check',
-    items:[
-      {id:'room_smell', ar:'الغرفة تفوح منها رائحة منعشة',         en:'Room smells fresh and pleasant'},
-      {id:'ac_working', ar:'المكيف يعمل وضبط على الدرجة المناسبة', en:'AC working and set to standard temperature'},
-      {id:'no_damage',  ar:'لا يوجد تلف أو أثاث مكسور',           en:'No visible damage or broken furniture'},
-      {id:'trash',      ar:'سلة المهملات فارغة ونظيفة',           en:'Trash bins emptied and clean'},
-    ]
-  }
+// ═════════════════════════════════════════════════════════
+// SHARED CHECKLISTS — used by more than one area
+// ═════════════════════════════════════════════════════════
+const CORRIDOR_ITEMS = [
+  {id:'r_carpet',   ar:'السجاد مكنوس / الأرضية ممسوحة',         en:'Carpet vacuumed / floor mopped'},
+  {id:'r_corners',  ar:'الزوايا والحواف نظيفة',                  en:'Corners and edges clean'},
+  {id:'r_walls',    ar:'الجدران خالية من البقع والخدوش',         en:'Walls free of marks and scuffs'},
+  {id:'r_skirting', ar:'ألواح الحواف منظّفة من الغبار',          en:'Skirting boards dusted'},
+  {id:'r_doors',    ar:'الأبواب والمقابض ممسوحة',                en:'Doors and handles wiped'},
+  {id:'r_plates',   ar:'لوحات أرقام الغرف نظيفة',                en:'Room number plates clean'},
+  {id:'r_lights',   ar:'جميع الإضاءة تعمل',                      en:'All lights working'},
+  {id:'r_trolley',  ar:'لا توجد عربات أو مفارش متروكة في الممر',  en:'No trolleys or linen left in corridor'},
+  {id:'r_exting',   ar:'طفاية الحريق موجودة ويمكن الوصول إليها',  en:'Fire extinguisher present and accessible'},
+  {id:'r_exitsign', ar:'لافتة مخرج الطوارئ مضاءة',               en:'Emergency exit sign lit'},
+  {id:'r_odour',    ar:'لا توجد رائحة كريهة',                    en:'No bad odour'},
+  {id:'r_windows',  ar:'النوافذ والزجاج نظيفة',                  en:'Windows and glass clean'},
 ];
+
+const MEETING_ITEMS = [
+  {id:'m_floor',     ar:'الأرضية مكنوسة / ممسوحة',            en:'Floor vacuumed / mopped'},
+  {id:'m_tables',    ar:'الطاولات ممسوحة وملمّعة',            en:'Tables wiped and polished'},
+  {id:'m_chairs',    ar:'الكراسي نظيفة ومرتّبة',              en:'Chairs clean and arranged'},
+  {id:'m_board',     ar:'السبورة نظيفة',                      en:'Whiteboard cleaned'},
+  {id:'m_projector', ar:'جهاز العرض والشاشة خالية من الغبار', en:'Projector and screen dust-free'},
+  {id:'m_cables',    ar:'الأسلاك مرتّبة وآمنة',               en:'Cables tidy and safe'},
+  {id:'m_water',     ar:'زجاجات المياه / الأكواب متوفرة',     en:'Water bottles / glasses restocked'},
+  {id:'m_notepads',  ar:'الدفاتر والأقلام موضوعة',            en:'Notepads and pens set out'},
+  {id:'m_bin',       ar:'سلة المهملات مفرغة',                 en:'Waste bin emptied'},
+  {id:'m_ac',        ar:'المكيف يعمل والحرارة مضبوطة',        en:'AC working, temperature set'},
+  {id:'m_lights',    ar:'جميع الإضاءة تعمل',                  en:'All lights working'},
+  {id:'m_curtains',  ar:'الستائر مرتّبة',                     en:'Curtains / blinds tidy'},
+  {id:'m_leftover',  ar:'لا توجد أغراض من الاجتماع السابق',   en:'No items left from previous meeting'},
+];
+
+// ═════════════════════════════════════════════════════════
+// AREAS — every inspectable place in the hotel
+// To add an area: copy one block and change the items
+// ═════════════════════════════════════════════════════════
+const AREAS = [
+  {
+    id:'guest_room', icon:'🛏️', ar:'غرفة النزلاء', en:'Guest Room', rooms:true,
+    sections:[
+      { id:'entrance', icon:'🚪', ar:'المدخل والصالة', en:'Entrance & Living Area', items:[
+        {id:'floor_clean', ar:'الأرضية نظيفة ومكنوسة',                en:'Floor swept and clean'},
+        {id:'floor_smell', ar:'لا رائحة كريهة من المكنسة أو الممسحة', en:'No bad smell from mop or cleaning tools'},
+        {id:'under_furn',  ar:'تحت الأثاث نظيف (لا أوساخ مخفية)',     en:'Under furniture is clean (no hidden dirt)'},
+        {id:'sofa_clean',  ar:'الكنب والوسائد نظيفة وبدون أثر',       en:'Sofa and cushions clean and stain-free'},
+        {id:'table_clean', ar:'الطاولات ممسوحة من الأعلى والأسفل',    en:'Tables wiped top and underneath'},
+        {id:'no_leftover', ar:'لا توجد مقتنيات للنزيل السابق',        en:'No belongings left from previous guest'},
+        {id:'curtains',    ar:'الستائر مرتبة وسليمة',                 en:'Curtains straightened and intact'},
+      ]},
+      { id:'bedroom', icon:'🛏️', ar:'غرفة النوم', en:'Bedroom', items:[
+        {id:'bed_made',  ar:'السرير مرتب بشكل صحيح',          en:'Bed properly made'},
+        {id:'under_bed', ar:'تحت السرير نظيف',                en:'Under the bed is clean'},
+        {id:'wardrobe',  ar:'الخزانة فارغة ونظيفة من الداخل', en:'Wardrobe empty and clean inside'},
+        {id:'mirror',    ar:'المرايا نظيفة بدون بصمات',       en:'Mirrors clean with no fingerprints'},
+        {id:'bedside',   ar:'طاولة السرير ممسوحة',            en:'Bedside table wiped'},
+        {id:'lamps',     ar:'الإضاءة تعمل بشكل سليم',         en:'All lights working'},
+      ]},
+      { id:'bathroom', icon:'🚿', ar:'الحمام', en:'Bathroom', items:[
+        {id:'toilet',    ar:'المرحاض نظيف من الداخل والخارج', en:'Toilet clean inside and out'},
+        {id:'sink_taps', ar:'الحوض والصنبور نظيفان ولامعان',  en:'Sink and taps clean and shiny'},
+        {id:'shower',    ar:'الدش / البانيو نظيف بدون آثار',  en:'Shower/tub clean with no residue'},
+        {id:'bath_flr',  ar:'أرضية الحمام جافة ونظيفة',       en:'Bathroom floor dry and clean'},
+        {id:'no_hair',   ar:'لا توجد شعرات في أي مكان',       en:'No hair anywhere in bathroom'},
+        {id:'towels',    ar:'المناشف وضعت بشكل صحيح وجديدة',  en:'Towels placed correctly and fresh'},
+        {id:'amenities', ar:'الصابون والشامبو تم تجديدها',     en:'Soap and shampoo restocked'},
+        {id:'no_mildew', ar:'لا رائحة عفن أو رطوبة',          en:'No mildew or damp smell'},
+      ]},
+      { id:'kitchen', icon:'☕', ar:'المطبخ / ركن المشروبات', en:'Kitchen / Kitchenette', items:[
+        {id:'kettle',    ar:'الكيتل نظيف من الداخل والخارج',       en:'Kettle clean inside and outside'},
+        {id:'cups',      ar:'الأكواب غُسلت ومصقولة',              en:'Cups washed and polished'},
+        {id:'fridge',    ar:'الثلاجة فارغة ومنظفة (إن وجدت)',     en:'Fridge emptied and wiped (if present)'},
+        {id:'microwave', ar:'الميكروويف نظيف من الداخل (إن وجد)', en:'Microwave clean inside (if present)'},
+        {id:'counter',   ar:'سطح المطبخ ممسوح ونظيف',             en:'Counter wiped and clean'},
+      ]},
+      { id:'general', icon:'🌟', ar:'العام والنهائي', en:'General & Final Check', items:[
+        {id:'room_smell', ar:'الغرفة تفوح منها رائحة منعشة',         en:'Room smells fresh and pleasant'},
+        {id:'ac_working', ar:'المكيف يعمل وضبط على الدرجة المناسبة', en:'AC working and set to standard temperature'},
+        {id:'no_damage',  ar:'لا يوجد تلف أو أثاث مكسور',           en:'No visible damage or broken furniture'},
+        {id:'trash',      ar:'سلة المهملات فارغة ونظيفة',           en:'Trash bins emptied and clean'},
+      ]},
+    ]
+  },
+
+  {
+    id:'gf_toilets', icon:'🚻', ar:'دورات المياه — الطابق الأرضي', en:'Ground Floor Toilets',
+    sections:[{ id:'main', icon:'🚻', ar:'دورات المياه — الطابق الأرضي', en:'Ground Floor Toilets', items:[
+      {id:'t_floor',   ar:'الأرضية ممسوحة بمادة مطهّرة',          en:'Floor mopped with disinfectant chemical'},
+      {id:'t_bowls',   ar:'المراحيض نظيفة من الداخل والخارج',     en:'Toilet bowls clean inside and out'},
+      {id:'t_seats',   ar:'مقاعد المراحيض معقّمة',                en:'Toilet seats disinfected'},
+      {id:'t_flush',   ar:'السيفون يعمل في كل حمام',              en:'Flush working in every toilet'},
+      {id:'t_sinks',   ar:'الأحواض والصنابير نظيفة ولامعة',       en:'Sinks and taps clean and shiny'},
+      {id:'t_mirrors', ar:'المرايا نظيفة بدون بقع أو بصمات',      en:'Mirrors clean, no spots or fingerprints'},
+      {id:'t_soap',    ar:'موزّعات الصابون ممتلئة',               en:'Soap dispensers filled'},
+      {id:'t_towels',  ar:'المناديل الورقية متوفرة',              en:'Paper towels stocked'},
+      {id:'t_paper',   ar:'ورق التواليت متوفر في كل حمام',        en:'Toilet paper stocked in every toilet'},
+      {id:'t_dryer',   ar:'مجفف اليدين يعمل',                     en:'Hand dryer working'},
+      {id:'t_bins',    ar:'سلال المهملات مفرغة ومبطّنة',          en:'Waste bins emptied and lined'},
+      {id:'t_drains',  ar:'المصارف سالكة ولا توجد مياه راكدة',    en:'Drains clear, no standing water'},
+      {id:'t_odour',   ar:'لا توجد روائح كريهة ومعطّر الجو يعمل',  en:'No bad odour, air freshener working'},
+      {id:'t_locks',   ar:'أقفال أبواب الحمامات تعمل',            en:'Toilet door locks working'},
+      {id:'t_lights',  ar:'جميع الإضاءة تعمل',                    en:'All lights working'},
+      {id:'t_fan',     ar:'الشفاط / التهوية يعمل',                en:'Exhaust fan / ventilation working'},
+      {id:'t_walls',   ar:'الجدران والأبواب خالية من البقع',      en:'Walls and doors free of marks'},
+    ]}]
+  },
+
+  {
+    id:'coffee_shop', icon:'☕', ar:'منطقة المقهى', en:'Coffee Shop Area',
+    sections:[{ id:'main', icon:'☕', ar:'منطقة المقهى', en:'Coffee Shop Area', items:[
+      {id:'c_floor',   ar:'الأرضية مكنوسة وممسوحة',                en:'Floor swept and mopped'},
+      {id:'c_tables',  ar:'الطاولات ممسوحة ومعقّمة',               en:'Tables wiped and sanitised'},
+      {id:'c_chairs',  ar:'الكراسي نظيفة بدون فتات أو بقع',        en:'Chairs clean, no crumbs or stains'},
+      {id:'c_counter', ar:'كاونتر الخدمة نظيف ومرتب',              en:'Service counter clean and clear'},
+      {id:'c_machine', ar:'ماكينة القهوة نظيفة ومزالة الترسبات',   en:'Coffee machine cleaned and descaled'},
+      {id:'c_fridge',  ar:'الثلاجة / وحدة العرض نظيفة من الداخل',  en:'Fridge / display unit clean inside'},
+      {id:'c_sink',    ar:'الحوض فارغ ولا توجد أطباق متروكة',      en:'Sink empty, no dishes left'},
+      {id:'c_bins',    ar:'سلال المهملات مفرغة',                   en:'Waste bins emptied'},
+      {id:'c_sugar',   ar:'السكر والإضافات متوفرة',                en:'Sugar and condiments restocked'},
+      {id:'c_napkins', ar:'المناديل والملاعق متوفرة',              en:'Napkins and stirrers restocked'},
+      {id:'c_glass',   ar:'الزجاج والنوافذ نظيفة',                 en:'Glass and windows clean'},
+      {id:'c_pests',   ar:'لا توجد حشرات أو آثارها',               en:'No insects or pest signs'},
+      {id:'c_ac',      ar:'المكيف يعمل ومضبوط بشكل صحيح',          en:'AC working and set correctly'},
+      {id:'c_lights',  ar:'جميع الإضاءة تعمل',                     en:'All lights working'},
+      {id:'c_spills',  ar:'الأرضية خالية من الانسكابات واللزوجة',  en:'Floor free of spills and sticky spots'},
+    ]}]
+  },
+
+  {
+    id:'stairs', icon:'🪜', ar:'الدرج', en:'Stairs',
+    sections:[{ id:'main', icon:'🪜', ar:'الدرج', en:'Stairs', items:[
+      {id:'s_steps',    ar:'الدرجات مكنوسة وممسوحة',                   en:'Steps swept and mopped'},
+      {id:'s_corners',  ar:'الزوايا والحواف خالية من الغبار',          en:'Corners and edges free of dust'},
+      {id:'s_rails',    ar:'الدرابزين ممسوح ومعقّم',                   en:'Handrails wiped and disinfected'},
+      {id:'s_walls',    ar:'الجدران خالية من البقع والخدوش',           en:'Walls free of marks and scuffs'},
+      {id:'s_items',    ar:'لا توجد أغراض أو صناديق مخزّنة على الدرج',  en:'No items or boxes stored on stairs'},
+      {id:'s_lights',   ar:'الإضاءة تعمل في جميع البسطات',             en:'Lights working on all landings'},
+      {id:'s_exitsign', ar:'لافتات مخرج الطوارئ ظاهرة ومضاءة',         en:'Emergency exit signs visible and lit'},
+      {id:'s_exitdoor', ar:'أبواب مخرج الطوارئ غير مسدودة',            en:'Fire exit doors not blocked'},
+      {id:'s_antislip', ar:'شرائط منع الانزلاق سليمة',                 en:'Anti-slip strips intact'},
+      {id:'s_wetsign',  ar:'لافتة الأرضية المبللة موضوعة عند الحاجة',   en:'Wet floor sign used where needed'},
+    ]}]
+  },
+
+  {
+    id:'elevator', icon:'🛗', ar:'المصعد', en:'Elevator',
+    sections:[{ id:'main', icon:'🛗', ar:'المصعد', en:'Elevator', items:[
+      {id:'e_buttons',   ar:'الأزرار ممسوحة ومعقّمة',        en:'Buttons wiped and disinfected'},
+      {id:'e_floor',     ar:'الأرضية نظيفة',                 en:'Floor cleaned'},
+      {id:'e_mirrors',   ar:'المرايا والجدران ملمّعة',       en:'Mirrors and walls polished'},
+      {id:'e_tracks',    ar:'مجاري الأبواب نظيفة',           en:'Door tracks and grooves clean'},
+      {id:'e_odour',     ar:'لا توجد رائحة كريهة',           en:'No bad odour'},
+      {id:'e_lights',    ar:'الإضاءة تعمل',                  en:'Lights working'},
+      {id:'e_phone',     ar:'هاتف / جرس الطوارئ يعمل',       en:'Emergency phone / alarm working'},
+      {id:'e_doors',     ar:'الأبواب تفتح وتغلق بسلاسة',     en:'Doors open and close smoothly'},
+      {id:'e_indicator', ar:'مؤشر الطوابق يعمل',             en:'Floor indicator working'},
+      {id:'e_cert',      ar:'شهادة الفحص سارية ومعروضة',     en:'Inspection certificate valid and displayed'},
+    ]}]
+  },
+
+  {
+    id:'basement', icon:'🏚️', ar:'القبو', en:'Basement',
+    sections:[{ id:'main', icon:'🏚️', ar:'القبو', en:'Basement', items:[
+      {id:'b_floor',    ar:'الأرضية مكنوسة ونظيفة',                      en:'Floor swept and clean'},
+      {id:'b_water',    ar:'لا توجد مياه راكدة',                         en:'No standing water'},
+      {id:'b_drains',   ar:'المصارف سالكة',                              en:'Drains clear'},
+      {id:'b_storage',  ar:'الأغراض مخزّنة بشكل مرتب',                   en:'Stored items arranged tidily'},
+      {id:'b_walkways', ar:'الممرات سالكة وغير مسدودة',                  en:'Walkways clear and unobstructed'},
+      {id:'b_pests',    ar:'لا توجد آثار حشرات أو قوارض',                en:'No pest or rodent signs'},
+      {id:'b_vent',     ar:'التهوية تعمل',                               en:'Ventilation working'},
+      {id:'b_lights',   ar:'الإضاءة تعمل',                               en:'Lights working'},
+      {id:'b_fire',     ar:'معدات الإطفاء يمكن الوصول إليها',            en:'Fire equipment accessible'},
+      {id:'b_chem',     ar:'المواد الكيميائية مخزّنة بشكل صحيح ومعلّمة',  en:'Chemicals stored correctly and labelled'},
+      {id:'b_panels',   ar:'لوحات الكهرباء غير مسدودة',                  en:'Electrical panels not blocked'},
+      {id:'b_damp',     ar:'لا توجد رائحة رطوبة أو عفن',                 en:'No damp or mould smell'},
+    ]}]
+  },
+
+  {
+    id:'front', icon:'🏨', ar:'واجهة الفندق', en:'Hotel Front',
+    sections:[{ id:'main', icon:'🏨', ar:'واجهة الفندق', en:'Hotel Front', items:[
+      {id:'f_floor',   ar:'أرضية المدخل والبلاط نظيفة',        en:'Entrance floor and tiles clean'},
+      {id:'f_glass',   ar:'الأبواب الزجاجية نظيفة بدون بصمات',  en:'Glass doors clean, no fingerprints'},
+      {id:'f_mat',     ar:'دعّاسة المدخل نظيفة ومستوية',        en:'Entrance mat clean and flat'},
+      {id:'f_litter',  ar:'لا توجد نفايات حول المدخل',          en:'No litter around the entrance'},
+      {id:'f_signage', ar:'اللوحات نظيفة ومضاءة',               en:'Signage clean and lit'},
+      {id:'f_plants',  ar:'النباتات والتنسيق مرتّبة',           en:'Plants and landscaping tidy'},
+      {id:'f_ashtray', ar:'منافض السجائر مفرغة ونظيفة',         en:'Ashtrays emptied and clean'},
+      {id:'f_parking', ar:'منطقة المواقف نظيفة',                en:'Parking area clean'},
+      {id:'f_lights',  ar:'الإضاءة الخارجية تعمل',              en:'Exterior lights working'},
+      {id:'f_drains',  ar:'المصارف سالكة',                      en:'Drains clear'},
+    ]}]
+  },
+
+  {
+    id:'back', icon:'🚛', ar:'خلفية الفندق', en:'Hotel Back',
+    sections:[{ id:'main', icon:'🚛', ar:'خلفية الفندق', en:'Hotel Back', items:[
+      {id:'k_area',   ar:'المنطقة مكنوسة ونظيفة',            en:'Area swept and clean'},
+      {id:'k_bins',   ar:'حاويات النفايات مغلقة ونظيفة',     en:'Garbage bins closed and clean'},
+      {id:'k_washed', ar:'منطقة النفايات مغسولة',            en:'Garbage area washed down'},
+      {id:'k_waste',  ar:'لا توجد نفايات متروكة على الأرض',  en:'No waste left on the ground'},
+      {id:'k_pests',  ar:'لا توجد آثار حشرات أو قوارض',      en:'No pest or rodent signs'},
+      {id:'k_door',   ar:'باب الخدمة مؤمّن',                 en:'Service door secure'},
+      {id:'k_lights', ar:'الإضاءة تعمل',                     en:'Lights working'},
+      {id:'k_drains', ar:'المصارف سالكة',                    en:'Drains clear'},
+      {id:'k_exit',   ar:'مخرج الطوارئ خالٍ من العوائق',     en:'Fire exit clear of obstruction'},
+    ]}]
+  },
+
+  { id:'corridor1', icon:'🚶', ar:'ممر الطابق الأول',  en:'Corridor — 1st Floor', sections:[{id:'main',icon:'🚶',ar:'ممر الطابق الأول', en:'Corridor — 1st Floor', items:CORRIDOR_ITEMS}] },
+  { id:'corridor2', icon:'🚶', ar:'ممر الطابق الثاني', en:'Corridor — 2nd Floor', sections:[{id:'main',icon:'🚶',ar:'ممر الطابق الثاني',en:'Corridor — 2nd Floor', items:CORRIDOR_ITEMS}] },
+  { id:'corridor3', icon:'🚶', ar:'ممر الطابق الثالث', en:'Corridor — 3rd Floor', sections:[{id:'main',icon:'🚶',ar:'ممر الطابق الثالث',en:'Corridor — 3rd Floor', items:CORRIDOR_ITEMS}] },
+  { id:'corridor4', icon:'🚶', ar:'ممر الطابق الرابع', en:'Corridor — 4th Floor', sections:[{id:'main',icon:'🚶',ar:'ممر الطابق الرابع',en:'Corridor — 4th Floor', items:CORRIDOR_ITEMS}] },
+
+  { id:'meeting_small', icon:'💼', ar:'قاعة الاجتماعات الصغيرة', en:'Meeting Room — Small', sections:[{id:'main',icon:'💼',ar:'قاعة الاجتماعات الصغيرة',en:'Meeting Room — Small', items:MEETING_ITEMS}] },
+  { id:'meeting_big',   icon:'💼', ar:'قاعة الاجتماعات الكبيرة', en:'Meeting Room — Big',   sections:[{id:'main',icon:'💼',ar:'قاعة الاجتماعات الكبيرة',en:'Meeting Room — Big',   items:MEETING_ITEMS}] },
+
+  {
+    id:'emp_rooms', icon:'🛌', ar:'غرف الموظفين', en:'Employees Rooms',
+    sections:[{ id:'main', icon:'🛌', ar:'غرف الموظفين', en:'Employees Rooms', items:[
+      {id:'er_floor',     ar:'الأرضية مكنوسة وممسوحة',                         en:'Floor swept and mopped'},
+      {id:'er_beds',      ar:'الأسرّة مرتّبة والمفارش نظيفة',                   en:'Beds made and linen clean'},
+      {id:'er_linen',     ar:'تبديل مفارش السرير حسب الجدول',                  en:'Bed linen changed on schedule'},
+      {id:'er_underbed',  ar:'تحت الأسرّة نظيف',                               en:'Under beds clean'},
+      {id:'er_lockers',   ar:'الخزائن مرتّبة ومغلقة',                          en:'Lockers / wardrobes tidy and closed'},
+      {id:'er_food',      ar:'لا يوجد طعام أو مشروبات مفتوحة في الغرفة',       en:'No food or open drinks stored in room'},
+      {id:'er_bins',      ar:'سلال المهملات مفرغة',                            en:'Waste bins emptied'},
+      {id:'er_windows',   ar:'النوافذ والزجاج نظيفة',                          en:'Windows and glass clean'},
+      {id:'er_curtains',  ar:'الستائر نظيفة وسليمة',                           en:'Curtains clean and intact'},
+      {id:'er_bath',      ar:'دورة المياه نظيفة ومعقّمة',                      en:'Bathroom clean and disinfected'},
+      {id:'er_bathdrain', ar:'مصرف دورة المياه سالك',                          en:'Bathroom drain clear'},
+      {id:'er_soap',      ar:'الصابون وورق التواليت متوفران',                  en:'Soap and toilet paper stocked'},
+      {id:'er_ac',        ar:'المكيف يعمل والفلتر نظيف',                       en:'AC working and filter clean'},
+      {id:'er_lights',    ar:'جميع الإضاءة تعمل',                              en:'All lights working'},
+      {id:'er_damp',      ar:'لا توجد رطوبة أو عفن أو رائحة كريهة',            en:'No damp, mould or bad odour'},
+      {id:'er_electric',  ar:'المقابس الكهربائية آمنة ولا توجد أسلاك مكشوفة',  en:'Electrical sockets safe, no loose wiring'},
+      {id:'er_pests',     ar:'لا توجد آثار حشرات',                             en:'No pest signs'},
+      {id:'er_personal',  ar:'الأغراض الشخصية مرتّبة',                         en:'Personal items stored tidily'},
+    ]}]
+  },
+
+  {
+    id:'emp_kitchen', icon:'🍽️', ar:'مطبخ الموظفين', en:'Employees Kitchen',
+    sections:[{ id:'main', icon:'🍽️', ar:'مطبخ الموظفين', en:'Employees Kitchen', items:[
+      {id:'ek_floor',     ar:'الأرضية مكنوسة وممسوحة بمادة مطهّرة',    en:'Floor swept and mopped with disinfectant'},
+      {id:'ek_counters',  ar:'الأسطح والكاونترات معقّمة',              en:'Counters and surfaces sanitised'},
+      {id:'ek_sink',      ar:'الحوض فارغ ولا توجد أطباق متروكة',       en:'Sink empty, no dishes left'},
+      {id:'ek_drain',     ar:'مصرف الحوض سالك وبدون رائحة',            en:'Sink drain clear, no odour'},
+      {id:'ek_fridge',    ar:'الثلاجة نظيفة من الداخل',                en:'Fridge clean inside'},
+      {id:'ek_expired',   ar:'لا يوجد طعام منتهي الصلاحية في الثلاجة', en:'No expired food in fridge'},
+      {id:'ek_stored',    ar:'الطعام مغطى ومعلّم بالتاريخ',            en:'Food stored covered and labelled with date'},
+      {id:'ek_cooker',    ar:'الموقد نظيف وخالٍ من الدهون',            en:'Cooker / stove clean, no grease'},
+      {id:'ek_microwave', ar:'الميكروويف نظيف من الداخل',              en:'Microwave clean inside'},
+      {id:'ek_hood',      ar:'شفاط المطبخ والفلتر نظيفان',             en:'Extractor hood and filter clean'},
+      {id:'ek_cupboards', ar:'الدواليب مرتّبة ونظيفة من الداخل',       en:'Cupboards tidy and clean inside'},
+      {id:'ek_bin',       ar:'سلة المهملات مفرغة والغطاء مغلق',        en:'Waste bin emptied, lid closed'},
+      {id:'ek_pests',     ar:'لا توجد آثار حشرات أو قوارض',            en:'No pest or insect signs'},
+      {id:'ek_chem',      ar:'مواد التنظيف مخزّنة بعيداً عن الطعام',   en:'Cleaning chemicals stored away from food'},
+      {id:'ek_gas',       ar:'وصلة الغاز مفحوصة ولا توجد رائحة',       en:'Gas connection checked, no smell'},
+      {id:'ek_fire',      ar:'طفاية الحريق موجودة ويمكن الوصول إليها', en:'Fire extinguisher present and accessible'},
+      {id:'ek_lights',    ar:'جميع الإضاءة تعمل',                      en:'All lights working'},
+      {id:'ek_vent',      ar:'التهوية تعمل',                           en:'Ventilation working'},
+    ]}]
+  },
+];
+
+// ═════════════════════════════════════════════════════════
+// MAINTENANCE TASKS — per room, on a calendar not a shift
+// months = how often the task must be repeated
+// ═════════════════════════════════════════════════════════
+const MAINT_TASKS = [
+  { id:'mattress_flip',  ar:'قلب المرتبة',            en:'Mattress flipped',            months:6  },
+  { id:'pillows',        ar:'تبديل الوسائد',          en:'Pillows replaced',            months:12 },
+  { id:'protector',      ar:'غسل واقي المرتبة',       en:'Mattress protector washed',   months:3  },
+  { id:'ac_filter',      ar:'تنظيف فلتر المكيف',      en:'AC filter cleaned',           months:3  },
+  { id:'curtains_deep',  ar:'تنظيف الستائر بعمق',     en:'Curtains deep cleaned',       months:12 },
+  { id:'carpet_shampoo', ar:'غسل السجاد بالشامبو',    en:'Carpet shampooed',            months:6  },
+];
+
+const MAINT_KEY = 'gvh_maintenance_v1';
+
+// The log lives in this browser's storage — see the warning on the
+// maintenance screen. Wrapped because private mode can throw on access.
+function maintLoad() {
+  try { return JSON.parse(localStorage.getItem(MAINT_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function maintSave(data) {
+  try { localStorage.setItem(MAINT_KEY, JSON.stringify(data)); return true; }
+  catch(e) { alert('Could not save — storage is unavailable in this browser.\nتعذّر الحفظ في هذا المتصفح.'); return false; }
+}
+function addMonths(iso, n) {
+  const d = new Date(iso + 'T00:00:00');
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + n);
+  if (d.getDate() < day) d.setDate(0);   // 31 Aug + 6 months must not roll into March
+  return d.toISOString().split('T')[0];
+}
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+function daysBetween(a, b) {
+  return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00')) / 86400000);
+}
+// Returns {last, due, status} — status is 'never' | 'ok' | 'soon' | 'overdue'
+function maintStatus(room, task, data) {
+  const last = (data[room] || {})[task.id] || '';
+  if (!last) return { last:'', due:'', status:'never', days:null };
+  const due = addMonths(last, task.months);
+  const days = daysBetween(todayISO(), due);
+  return { last, due, days, status: days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok' };
+}
+// jsPDF draws glyphs left-to-right with no letter joining,
+// so Arabic must be converted to presentation forms and reversed.
+// ══════════════════════════════════════════
+const AR_FORMS = {
+  0x0621:[0xFE80],0x0622:[0xFE81,0xFE82],0x0623:[0xFE83,0xFE84],0x0624:[0xFE85,0xFE86],
+  0x0625:[0xFE87,0xFE88],0x0626:[0xFE89,0xFE8A,0xFE8B,0xFE8C],0x0627:[0xFE8D,0xFE8E],
+  0x0628:[0xFE8F,0xFE90,0xFE91,0xFE92],0x0629:[0xFE93,0xFE94],0x062A:[0xFE95,0xFE96,0xFE97,0xFE98],
+  0x062B:[0xFE99,0xFE9A,0xFE9B,0xFE9C],0x062C:[0xFE9D,0xFE9E,0xFE9F,0xFEA0],
+  0x062D:[0xFEA1,0xFEA2,0xFEA3,0xFEA4],0x062E:[0xFEA5,0xFEA6,0xFEA7,0xFEA8],
+  0x062F:[0xFEA9,0xFEAA],0x0630:[0xFEAB,0xFEAC],0x0631:[0xFEAD,0xFEAE],0x0632:[0xFEAF,0xFEB0],
+  0x0633:[0xFEB1,0xFEB2,0xFEB3,0xFEB4],0x0634:[0xFEB5,0xFEB6,0xFEB7,0xFEB8],
+  0x0635:[0xFEB9,0xFEBA,0xFEBB,0xFEBC],0x0636:[0xFEBD,0xFEBE,0xFEBF,0xFEC0],
+  0x0637:[0xFEC1,0xFEC2,0xFEC3,0xFEC4],0x0638:[0xFEC5,0xFEC6,0xFEC7,0xFEC8],
+  0x0639:[0xFEC9,0xFECA,0xFECB,0xFECC],0x063A:[0xFECD,0xFECE,0xFECF,0xFED0],
+  0x0641:[0xFED1,0xFED2,0xFED3,0xFED4],0x0642:[0xFED5,0xFED6,0xFED7,0xFED8],
+  0x0643:[0xFED9,0xFEDA,0xFEDB,0xFEDC],0x0644:[0xFEDD,0xFEDE,0xFEDF,0xFEE0],
+  0x0645:[0xFEE1,0xFEE2,0xFEE3,0xFEE4],0x0646:[0xFEE5,0xFEE6,0xFEE7,0xFEE8],
+  0x0647:[0xFEE9,0xFEEA,0xFEEB,0xFEEC],0x0648:[0xFEED,0xFEEE],0x0649:[0xFEEF,0xFEF0],
+  0x064A:[0xFEF1,0xFEF2,0xFEF3,0xFEF4]
+};
+const LAM_ALEF = { 0x0622:[0xFEF5,0xFEF6],0x0623:[0xFEF7,0xFEF8],0x0625:[0xFEF9,0xFEFA],0x0627:[0xFEFB,0xFEFC] };
+const isMark     = c => (c>=0x064B && c<=0x065F) || c===0x0670 || (c>=0x06D6 && c<=0x06ED);
+const isArabicCh = c => (c>=0x0600 && c<=0x06FF) || (c>=0xFE70 && c<=0xFEFF);
+const joinsLeft  = c => AR_FORMS[c] && AR_FORMS[c].length === 4;
+// Brackets have to be flipped when the run is reversed for right-to-left
+const MIRROR = {0x0028:0x0029,0x0029:0x0028,0x005B:0x005D,0x005D:0x005B,
+                0x007B:0x007D,0x007D:0x007B,0x003C:0x003E,0x003E:0x003C,
+                0x00AB:0x00BB,0x00BB:0x00AB};
+
+function AR(str) {
+  if (str === null || str === undefined) return '';
+  const s = String(str);
+  const cp = Array.from(s).map(ch => ch.codePointAt(0));
+  if (!cp.some(isArabicCh)) return s;
+
+  const clusters = [];
+  for (const c of cp) {
+    // Harakat (shadda, fatha, ...) are dropped for the PDF: jsPDF positions
+    // combining marks by advance width alone, so they can land on the wrong
+    // letter. Arabic documents are conventionally written without them.
+    // The on-screen checklist keeps them — browsers shape Arabic properly.
+    if (isMark(c)) continue;
+    clusters.push({ base:c, marks:[] });
+  }
+  const merged = [];
+  for (let i = 0; i < clusters.length; i++) {
+    const c = clusters[i], n = clusters[i+1];
+    if (c.base === 0x0644 && n && LAM_ALEF[n.base]) {
+      merged.push({ base:'LA', lig:LAM_ALEF[n.base], marks:c.marks.concat(n.marks) }); i++; continue;
+    }
+    merged.push(c);
+  }
+  const shaped = merged.map((c,i) => {
+    const prev = merged[i-1], next = merged[i+1];
+    const prevJoins = prev && (prev.base === 'LA' ? false : joinsLeft(prev.base));
+    const nextIsAr  = next && (next.base === 'LA' || isArabicCh(next.base));
+    if (c.base === 'LA') return { chars:[c.lig[prevJoins?1:0]], marks:c.marks };
+    const forms = AR_FORMS[c.base];
+    if (!forms) {
+      const ch = (!isArabicCh(c.base) && MIRROR[c.base]) ? MIRROR[c.base] : c.base;
+      return { chars:[ch], marks:c.marks, plain:!isArabicCh(c.base) };
+    }
+    const canNext = forms.length === 4 && nextIsAr;
+    let f;
+    if (prevJoins && canNext) f = forms[3];
+    else if (prevJoins)       f = forms[1];
+    else if (canNext)         f = forms[2];
+    else                      f = forms[0];
+    return { chars:[f], marks:c.marks };
+  });
+  const out = []; let run = [];
+  const flush = () => { if (run.length) { out.unshift(...run); run = []; } };
+  for (const sh of shaped) {
+    if (sh.plain && sh.chars[0] !== 0x20) { run.push(sh); continue; }
+    flush(); out.unshift(sh);
+  }
+  flush();
+  return out.map(sh => String.fromCodePoint(...sh.chars, ...sh.marks)).join('');
+}
 
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
 let state = {
-  room:'', floor:'', date:'', shift:'', staff:'', role:'',
+  areaId:'', areaAr:'', areaEn:'', room:'', floor:'',
+  date:'', shift:'', staff:'', role:'',
   results:{}, notes:{}, photos:{}, photosFullHQ:{},
-  approval:'', totalItems:0, time:''
+  approval:'', totalItems:0, time:'', submitTime:'', nextDue:'', assignedBy:''
 };
+let assignedBy = '';   // set from the ?by= link parameter
+let currentArea = null;
+let currentStaff = null;
 
 // ══════════════════════════════════════════
 // SETUP
 // ══════════════════════════════════════════
 document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
 
-// Build room dropdown grouped by floor
+(function buildAreaList(){
+  const sel = document.getElementById('areaSelect');
+  AREAS.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = a.icon + '  ' + a.ar + '  |  ' + a.en;
+    sel.appendChild(o);
+  });
+})();
+
 (function buildRoomList() {
   const sel = document.getElementById('roomNumber');
   FLOORS.forEach(f => {
@@ -347,8 +823,7 @@ document.getElementById('inspDate').value = new Date().toISOString().split('T')[
     grp.label = f.ar + ' / ' + f.en;
     for (let r = f.from; r <= f.to; r++) {
       const opt = document.createElement('option');
-      opt.value = r;
-      opt.textContent = r;
+      opt.value = r; opt.textContent = r;
       grp.appendChild(opt);
     }
     sel.appendChild(grp);
@@ -360,16 +835,23 @@ function getFloorForRoom(room) {
   return FLOORS.find(f => n >= f.from && n <= f.to) || null;
 }
 
+function areaChanged() {
+  const id = document.getElementById('areaSelect').value;
+  currentArea = AREAS.find(a => a.id === id) || null;
+  document.getElementById('roomWrap').style.display = (currentArea && currentArea.rooms) ? 'block' : 'none';
+  if (!currentArea || !currentArea.rooms) {
+    document.getElementById('roomNumber').value = '';
+    document.getElementById('floorDisplay').style.display = 'none';
+  }
+  checkSetupReady();
+}
+
 function roomChanged() {
   const room = document.getElementById('roomNumber').value;
   const fd = document.getElementById('floorDisplay');
   const f = getFloorForRoom(room);
-  if (f) {
-    fd.style.display = 'block';
-    fd.textContent = '🏢 ' + f.ar + ' / ' + f.en;
-  } else {
-    fd.style.display = 'none';
-  }
+  if (f) { fd.style.display = 'block'; fd.textContent = '🏢 ' + f.ar + ' / ' + f.en; }
+  else   { fd.style.display = 'none'; }
   checkSetupReady();
 }
 
@@ -377,15 +859,16 @@ function roomChanged() {
   document.getElementById(id).addEventListener('input', checkSetupReady)
 );
 
-let currentStaff = null;
-
 function checkPin() {
   const pin = document.getElementById('staffPin').value.trim();
   const box = document.getElementById('pinStatus');
   currentStaff = null;
-
-  if (!pin) { box.style.display = 'none'; checkSetupReady(); return; }
-
+  if (!pin) {
+    box.style.display = 'none';
+    document.getElementById('assignBtn').style.display = 'none';
+    document.getElementById('maintBtn').style.display = 'none';
+    checkSetupReady(); return;
+  }
   const match = STAFF.find(s => s.pin === pin);
   if (match) {
     currentStaff = match;
@@ -396,44 +879,292 @@ function checkPin() {
     box.style.background = 'var(--pass-bg)';
     box.style.color = 'var(--pass)';
     box.textContent = icon + ' مرحباً ' + match.name + ' — ' + roleAr + ' / ' + roleEn;
+    document.getElementById('assignBtn').style.display =
+      (match.role === 'supervisor') ? 'block' : 'none';
+    document.getElementById('maintBtn').style.display = 'block';
   } else if (pin.length >= 4) {
     box.style.display = 'block';
     box.style.background = 'var(--fail-bg)';
     box.style.color = 'var(--fail)';
     box.textContent = '❌ رقم سري غير صحيح / Wrong PIN';
+    document.getElementById('assignBtn').style.display = 'none';
+    document.getElementById('maintBtn').style.display = 'none';
   } else {
     box.style.display = 'none';
+    document.getElementById('assignBtn').style.display = 'none';
+    document.getElementById('maintBtn').style.display = 'none';
   }
   checkSetupReady();
 }
 
 function checkSetupReady() {
-  const ok = document.getElementById('roomNumber').value &&
-             document.getElementById('shiftSelect').value &&
-             currentStaff;
+  const areaOk = currentArea && (!currentArea.rooms || document.getElementById('roomNumber').value);
+  const ok = areaOk && document.getElementById('shiftSelect').value && currentStaff;
   document.getElementById('startBtn').disabled = !ok;
 }
 
 function startInspection() {
-  if (!currentStaff) return;
-  state.room  = document.getElementById('roomNumber').value;
-  const f = getFloorForRoom(state.room);
-  state.floor = f ? f.floor : '';
+  if (!currentStaff || !currentArea) return;
+  state.areaId = currentArea.id;
+  state.areaAr = currentArea.ar;
+  state.areaEn = currentArea.en;
+  if (currentArea.rooms) {
+    state.room = document.getElementById('roomNumber').value;
+    const f = getFloorForRoom(state.room);
+    state.floor = f ? f.floor : '';
+  } else { state.room = ''; state.floor = ''; }
   state.date  = document.getElementById('inspDate').value;
   state.shift = document.getElementById('shiftSelect').value;
   state.staff = currentStaff.name;
   state.role  = currentStaff.role;
-  const now = new Date();
-  state.time  = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  state.time  = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
   state.results = {}; state.notes = {}; state.photos = {}; state.photosFullHQ = {};
-  state.approval = '';
+  state.approval = ''; state.submitTime = '';
+  state.assignedBy = assignedBy;
+
   buildChecklist();
   showScreen('screenCheck');
-  document.getElementById('headerTitle').textContent = 'غرفة ' + state.room + '  |  Room ' + state.room;
+  document.getElementById('headerTitle').textContent = areaLabelAr() + ' | ' + areaLabelEn();
   document.getElementById('headerSub').textContent = state.staff + ' — ' + state.shift;
   document.getElementById('progressWrap').style.display = 'block';
   updateProgress();
 }
+
+function areaLabelAr() { return state.room ? ('غرفة ' + state.room) : state.areaAr; }
+function areaLabelEn() { return state.room ? ('Room ' + state.room) : state.areaEn; }
+
+// ══════════════════════════════════════════
+// ASSIGN WORK — supervisors only.
+// The assignment travels inside a WhatsApp message. There is no server,
+// so nothing is tracked: the WhatsApp thread is the record.
+// ══════════════════════════════════════════
+const assign = { areas: new Set(), rooms: new Set(), staff: new Set() };
+
+function openAssign() {
+  if (!currentStaff || currentStaff.role !== 'supervisor') return;
+  assign.areas.clear(); assign.rooms.clear(); assign.staff.clear();
+  document.getElementById('assignDate').value  = document.getElementById('inspDate').value;
+  document.getElementById('assignShift').value = document.getElementById('shiftSelect').value;
+  buildAssignPickers();
+  renderAssignPreview();
+  showScreen('screenAssign');
+  document.getElementById('headerTitle').textContent = 'توزيع المهام | Assign Work';
+  document.getElementById('headerSub').textContent = currentStaff.name;
+}
+
+function closeAssign() {
+  showScreen('screenSetup');
+  document.getElementById('headerTitle').textContent = 'فحص الجودة | Quality Inspection';
+  document.getElementById('headerSub').textContent = 'نظام ضمان الجودة';
+}
+
+function buildAssignPickers() {
+  // Areas
+  const aw = document.getElementById('assignAreas');
+  aw.innerHTML = '';
+  AREAS.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'pick-row';
+    row.innerHTML = '<span class="pick-box">✓</span><span>' + a.icon + ' ' + a.ar +
+                    '<br><span class="pick-sub">' + a.en + '</span></span>';
+    row.onclick = () => {
+      if (assign.areas.has(a.id)) { assign.areas.delete(a.id); row.classList.remove('on'); }
+      else { assign.areas.add(a.id); row.classList.add('on'); }
+      document.getElementById('assignRoomsWrap').style.display =
+        assign.areas.has('guest_room') ? 'block' : 'none';
+      if (!assign.areas.has('guest_room')) assign.rooms.clear();
+      renderAssignPreview();
+    };
+    aw.appendChild(row);
+  });
+
+  // Room chips, grouped by floor
+  const rw = document.getElementById('assignRooms');
+  rw.innerHTML = '';
+  FLOORS.forEach(f => {
+    const lbl = document.createElement('div');
+    lbl.className = 'chip-floor-lbl';
+    lbl.textContent = f.ar + ' / ' + f.en;
+    rw.appendChild(lbl);
+    for (let r = f.from; r <= f.to; r++) {
+      const chip = document.createElement('div');
+      chip.className = 'room-chip';
+      chip.textContent = r;
+      chip.onclick = () => {
+        const k = String(r);
+        if (assign.rooms.has(k)) { assign.rooms.delete(k); chip.classList.remove('on'); }
+        else { assign.rooms.add(k); chip.classList.add('on'); }
+        renderAssignPreview();
+      };
+      rw.appendChild(chip);
+    }
+  });
+
+  // Staff
+  const sw = document.getElementById('assignStaff');
+  sw.innerHTML = '';
+  STAFF.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'pick-row';
+    const roleAr = s.role === 'supervisor' ? 'مشرف' : 'عامل نظافة';
+    const icon   = s.role === 'supervisor' ? '👁️' : '🧹';
+    row.innerHTML = '<span class="pick-box">✓</span><span>' + icon + ' ' + s.name +
+                    '<br><span class="pick-sub">' + roleAr + ' / ' +
+                    (s.role === 'supervisor' ? 'Supervisor' : 'Cleaner') + '</span></span>';
+    row.onclick = () => {
+      if (assign.staff.has(s.name)) { assign.staff.delete(s.name); row.classList.remove('on'); }
+      else { assign.staff.add(s.name); row.classList.add('on'); }
+      renderAssignPreview();
+    };
+    sw.appendChild(row);
+  });
+}
+
+function appBaseURL() {
+  return location.origin + location.pathname;
+}
+
+// Builds the task list: guest rooms expand to one task per selected room
+function assignTasks() {
+  const date  = document.getElementById('assignDate').value;
+  const shift = document.getElementById('assignShift').value;
+  const by    = currentStaff ? currentStaff.name : '';
+  const tasks = [];
+  AREAS.forEach(a => {
+    if (!assign.areas.has(a.id)) return;
+    if (a.rooms) {
+      Array.from(assign.rooms).sort((x,y)=>x-y).forEach(room => {
+        const q = new URLSearchParams({ area:a.id, room, shift, date, by });
+        tasks.push({ label:'Room ' + room, labelAr:'غرفة ' + room, url: appBaseURL() + '?' + q });
+      });
+    } else {
+      const q = new URLSearchParams({ area:a.id, shift, date, by });
+      tasks.push({ label:a.en, labelAr:a.ar, url: appBaseURL() + '?' + q });
+    }
+  });
+  return tasks;
+}
+
+function assignMessage() {
+  const date  = document.getElementById('assignDate').value;
+  const shift = document.getElementById('assignShift').value;
+  const staff = Array.from(assign.staff);
+  const tasks = assignTasks();
+  const shiftMap = { Morning:'Morning / Sabah', Evening:'Evening / Masaa', Night:'Night / Layl' };
+
+  let m = '🧹 *GOLDEN VISION HOTEL - WORK ASSIGNMENT*\n';
+  m += '------------------------------------\n';
+  m += '📅 Date: ' + (date || '-') + '\n';
+  m += '⏰ Shift: ' + (shiftMap[shift] || shift || '-') + '\n';
+  m += '👤 Assigned to: ' + (staff.join(', ') || '-') + '\n';
+  m += '👁 Assigned by: ' + (currentStaff ? currentStaff.name : '-') + '\n';
+  m += '------------------------------------\n';
+  m += '*TASKS (' + tasks.length + '):*\n\n';
+  tasks.forEach((t, i) => {
+    m += (i+1) + '. ' + t.label + '\n' + t.url + '\n\n';
+  });
+  m += '------------------------------------\n';
+  m += 'Open your task link, enter your PIN, and complete the checklist.\n';
+  m += 'افتح الرابط، أدخل رقمك السري، وأكمل قائمة الفحص.';
+  return m;
+}
+
+// WhatsApp links are passed through the phone's URL handler, which truncates
+// somewhere around 8000 characters on Android. Warn before that happens.
+const WA_URL_LIMIT = 7000;
+function assignURLLength() {
+  return ('https://wa.me/?text=' + encodeURIComponent(assignMessage())).length;
+}
+
+function renderAssignPreview() {
+  const tasks = assignTasks();
+  const ready = tasks.length && assign.staff.size &&
+                document.getElementById('assignShift').value &&
+                document.getElementById('assignDate').value;
+  document.getElementById('assignSendBtn').disabled = !ready;
+  const warnRooms = assign.areas.has('guest_room') && !assign.rooms.size;
+  const box = document.getElementById('assignPreview');
+
+  if (!assign.areas.size)      { box.textContent = 'Select at least one area…'; return; }
+  if (warnRooms)               { box.textContent = 'Guest Room selected — now pick the room numbers…'; return; }
+  if (!assign.staff.size)      { box.textContent = 'Now select who is doing the work…'; return; }
+
+  const tooLong = assignURLLength() > WA_URL_LIMIT;
+  box.textContent =
+    (tooLong ? '⚠ TOO LONG FOR WHATSAPP (' + tasks.length + ' tasks).\n' +
+               'WhatsApp will cut the message. Send fewer tasks per message,\n' +
+               'or use "Copy Message" and paste it into WhatsApp instead.\n' +
+               'رسالة طويلة جداً — أرسل مهام أقل أو استخدم النسخ.\n\n' : '')
+    + assignMessage();
+  box.style.color = tooLong ? 'var(--fail)' : 'var(--text-muted)';
+}
+
+['assignDate'].forEach(id =>
+  document.getElementById(id).addEventListener('input', renderAssignPreview));
+
+function sendAssignment() {
+  if (assignURLLength() > WA_URL_LIMIT) {
+    alert('الرسالة طويلة جداً على واتساب.\nأرسل عدداً أقل من المهام، أو استخدم "نسخ النص".\n\n' +
+          'This assignment is too long for a WhatsApp link and would be cut off.\n' +
+          'Send fewer tasks per message, or use "Copy Message" and paste it in.');
+    return;
+  }
+  window.open('https://wa.me/?text=' + encodeURIComponent(assignMessage()), '_blank');
+}
+
+async function copyAssignment() {
+  const txt = assignMessage();
+  try {
+    await navigator.clipboard.writeText(txt);
+    alert('تم نسخ الرسالة ✅\nMessage copied to clipboard');
+  } catch(e) {
+    // Clipboard API is blocked on some in-app browsers
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('تم النسخ ✅ / Copied'); }
+    catch(e2) { alert('Could not copy automatically — select the preview text and copy it manually.'); }
+    document.body.removeChild(ta);
+  }
+}
+
+// ══════════════════════════════════════════
+// DEEP LINK — a cleaner opening an assignment link
+// ══════════════════════════════════════════
+(function applyAssignmentLink() {
+  const p = new URLSearchParams(location.search);
+  const areaId = p.get('area');
+  if (!areaId) return;
+  const a = AREAS.find(x => x.id === areaId);
+  if (!a) return;
+
+  document.getElementById('areaSelect').value = areaId;
+  areaChanged();
+
+  const room = p.get('room');
+  if (a.rooms && room && getFloorForRoom(room)) {
+    document.getElementById('roomNumber').value = room;
+    roomChanged();
+  }
+  const shift = p.get('shift');
+  if (shift && ['Morning','Evening','Night'].includes(shift)) {
+    document.getElementById('shiftSelect').value = shift;
+  }
+  const date = p.get('date');
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    document.getElementById('inspDate').value = date;
+  }
+  const by = p.get('by');
+  if (by && STAFF.some(s => s.name === by)) assignedBy = by;
+
+  const label = (a.rooms && room) ? ('غرفة ' + room + ' / Room ' + room) : (a.ar + ' / ' + a.en);
+  const banner = document.getElementById('assignedBanner');
+  banner.style.display = 'block';
+  banner.innerHTML = '📌 مهمة موكلة إليك: <strong>' + label + '</strong>' +
+    (assignedBy ? '<br><span style="font-weight:400">من / from: ' + assignedBy + '</span>' : '') +
+    '<br><span style="font-weight:400">Assigned task — enter your PIN to start.</span>';
+
+  checkSetupReady();
+})();
 
 // ══════════════════════════════════════════
 // BUILD CHECKLIST
@@ -443,7 +1174,6 @@ function buildChecklist() {
   wrap.innerHTML = '';
   state.totalItems = 0;
 
-  // Mark-all-pass quick button
   const allBtn = document.createElement('button');
   allBtn.id = 'markAllBtn';
   allBtn.style.cssText = 'width:100%; padding:14px; background:var(--pass-bg); color:var(--pass); border:2px solid var(--pass); border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin:4px 0 10px;';
@@ -451,7 +1181,7 @@ function buildChecklist() {
   allBtn.onclick = markAllPass;
   wrap.appendChild(allBtn);
 
-  SECTIONS.forEach(sec => {
+  currentArea.sections.forEach(sec => {
     const sh = document.createElement('div');
     sh.className = 'section-header';
     sh.innerHTML = '<span class="section-icon">' + sec.icon + '</span>' + sec.ar + ' &nbsp;|&nbsp; ' + sec.en;
@@ -486,34 +1216,24 @@ function buildChecklist() {
     });
   });
 
-  if (state.role === 'supervisor') {
-    document.getElementById('approvalCard').style.display = 'block';
-  } else {
-    document.getElementById('approvalCard').style.display = 'none';
-  }
+  document.getElementById('approvalCard').style.display =
+    (state.role === 'supervisor') ? 'block' : 'none';
 }
 
 function setResult(id, result, btn) {
   state.results[id] = result;
   const ci = document.getElementById('ci_' + id);
-  ci.querySelectorAll('.tap-btn').forEach(b =>
-    b.classList.remove('pass-active','fail-active','na-active')
-  );
+  ci.querySelectorAll('.tap-btn').forEach(b => b.classList.remove('pass-active','fail-active','na-active'));
   btn.classList.add(result + '-active');
-
-  // Always show evidence zone once a result is tapped
   document.getElementById('ev_' + id).classList.add('visible');
-
-  // Highlight card if fail
   if (result === 'fail') ci.classList.add('has-fail');
   else ci.classList.remove('has-fail');
-
   updateProgress();
   checkSubmitReady();
 }
 
 function markAllPass() {
-  SECTIONS.forEach(sec => {
+  currentArea.sections.forEach(sec => {
     sec.items.forEach(item => {
       state.results[item.id] = 'pass';
       const ci = document.getElementById('ci_' + item.id);
@@ -522,48 +1242,31 @@ function markAllPass() {
       const btns = ci.querySelectorAll('.tap-btn');
       btns.forEach(b => b.classList.remove('pass-active','fail-active','na-active'));
       if (btns[0]) btns[0].classList.add('pass-active');
+      // Keep the evidence zone open if the cleaner already added a note or photo
+      const hasEvidence = (state.photos[item.id]||[]).length || (state.notes[item.id]||'').trim();
       const ev = document.getElementById('ev_' + item.id);
-      if (ev) ev.classList.remove('visible');
+      if (ev && !hasEvidence) ev.classList.remove('visible');
     });
   });
   const allBtn = document.getElementById('markAllBtn');
-  if (allBtn) {
-    allBtn.innerHTML = '✔️ تم — عدّل الآن ما فيه مشكلة فقط<br><small style="font-weight:600">Done — now change only the problem items</small>';
-  }
+  if (allBtn) allBtn.innerHTML = '✔️ تم — عدّل الآن ما فيه مشكلة فقط<br><small style="font-weight:600">Done — now change only the problem items</small>';
   updateProgress();
   checkSubmitReady();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ══════════════════════════════════════════
+// PHOTOS
+// ══════════════════════════════════════════
 function addPhoto(id, input) {
   if (!input.files.length) return;
   if (!state.photos[id])       state.photos[id] = [];
   if (!state.photosFullHQ[id]) state.photosFullHQ[id] = [];
 
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
   Array.from(input.files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       const fullSrc = e.target.result;
-
-      // ── Save full-quality to phone ONLY on mobile
-      if (isMobile) {
-        const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-        const fname = 'GVH_Room' + state.room + '_' + id + '_' + ts + '.jpg';
-        const dlLink = document.createElement('a');
-        dlLink.href = fullSrc;
-        dlLink.download = fname;
-        dlLink.style.display = 'none';
-        document.body.appendChild(dlLink);
-        dlLink.click();
-        document.body.removeChild(dlLink);
-        state.photosFullHQ[id].push({ src: fullSrc, name: fname });
-      } else {
-        state.photosFullHQ[id].push({ src: fullSrc, name: file.name });
-      }
-
-      // ── Compress for PDF (max 1200px wide, quality 0.80)
       const img = new Image();
       img.onload = () => {
         const MAX = 1200;
@@ -571,68 +1274,57 @@ function addPhoto(id, input) {
         const canvas = document.createElement('canvas');
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         const compressed = canvas.toDataURL('image/jpeg', 0.80);
-
-        // Capture index AFTER pushing
         state.photos[id].push(compressed);
-        const idx = state.photos[id].length - 1;
-
-        const pc = document.getElementById('pc_' + id);
-        pc.style.display = 'inline-block';
-        pc.textContent = state.photos[id].length + ' صورة / photo(s)';
-
-        const thumbs = document.getElementById('thumbs_' + id);
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb-wrap';
-        const thumb = document.createElement('img');
-        thumb.src = compressed;
-        thumb.className = 'thumb';
-        thumb.alt = 'evidence';
-        thumb.onclick = () => openLightbox(id, idx);
-        const del = document.createElement('button');
-        del.className = 'thumb-del';
-        del.textContent = '✕';
-        del.onclick = () => removePhoto(id, idx, wrap);
-        wrap.appendChild(thumb);
-        wrap.appendChild(del);
-        thumbs.appendChild(wrap);
+        state.photosFullHQ[id].push({ src: fullSrc, name: file.name });
+        renderThumbs(id);
       };
+      img.onerror = () => alert('Could not read that image / تعذّر قراءة الصورة');
       img.src = fullSrc;
     };
     reader.readAsDataURL(file);
   });
+  input.value = '';
 }
 
-function removePhoto(id, idx, wrapEl) {
-  state.photos[id].splice(idx, 1);
-  wrapEl.remove();
-  const pc = document.getElementById('pc_' + id);
-  if (state.photos[id].length === 0) { pc.style.display = 'none'; }
-  else { pc.textContent = state.photos[id].length + ' صورة / photo(s)'; }
-  // Re-index remaining thumbnails
+function renderThumbs(id) {
   const thumbs = document.getElementById('thumbs_' + id);
-  thumbs.querySelectorAll('.thumb-wrap').forEach((w, i) => {
-    w.querySelector('.thumb').setAttribute('onclick', 'openLightbox(\'' + id + '\',' + i + ')');
-    w.querySelector('.thumb-del').setAttribute('onclick', 'removePhoto(\'' + id + '\',' + i + ',this.parentNode)');
+  const pc = document.getElementById('pc_' + id);
+  const list = state.photos[id] || [];
+  thumbs.innerHTML = '';
+  if (!list.length) { pc.style.display = 'none'; return; }
+  pc.style.display = 'inline-block';
+  pc.textContent = list.length + ' صورة / photo(s)';
+  list.forEach((src, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb-wrap';
+    const thumb = document.createElement('img');
+    thumb.src = src; thumb.className = 'thumb'; thumb.alt = 'evidence';
+    thumb.onclick = () => openLightbox(id, i);
+    const del = document.createElement('button');
+    del.className = 'thumb-del'; del.textContent = '✕';
+    del.onclick = () => removePhoto(id, i);
+    wrap.appendChild(thumb); wrap.appendChild(del);
+    thumbs.appendChild(wrap);
   });
 }
 
+function removePhoto(id, idx) {
+  state.photos[id].splice(idx, 1);
+  if (state.photosFullHQ[id]) state.photosFullHQ[id].splice(idx, 1);
+  renderThumbs(id);
+}
+
 function openLightbox(id, idx) {
-  // Show full-quality version in lightbox if available, otherwise compressed
-  const src = (state.photosFullHQ[id] && state.photosFullHQ[id][idx])
-    ? state.photosFullHQ[id][idx].src
-    : state.photos[id][idx];
-  document.getElementById('lightbox-img').src = src;
+  const hq = state.photosFullHQ[id] && state.photosFullHQ[id][idx];
+  document.getElementById('lightbox-img').src = hq ? hq.src : state.photos[id][idx];
   document.getElementById('lightbox').classList.add('open');
 }
 
 function setApproval(val, btn) {
   state.approval = val;
-  document.querySelectorAll('.appr-btn').forEach(b =>
-    b.classList.remove('approved-active','reclean-active','notready-active')
-  );
+  document.querySelectorAll('.appr-btn').forEach(b => b.classList.remove('approved-active','reclean-active','notready-active'));
   btn.classList.add(val + '-active');
   checkSubmitReady();
 }
@@ -654,30 +1346,25 @@ function checkSubmitReady() {
 // SUBMIT → REPORT
 // ══════════════════════════════════════════
 function submitReport() {
-  // Capture submission time
-  const submitNow = new Date();
-  state.submitTime = submitNow.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  state.submitTime = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
 
   let pass=0, fail=0, na=0;
   const failItems = [];
+  currentArea.sections.forEach(sec => sec.items.forEach(item => {
+    const r = state.results[item.id];
+    if (r === 'pass') pass++;
+    else if (r === 'fail') { fail++; failItems.push({ ...item, note: state.notes[item.id]||'', photos: state.photos[item.id]||[] }); }
+    else if (r === 'na') na++;
+  }));
 
-  SECTIONS.forEach(sec => {
-    sec.items.forEach(item => {
-      const r = state.results[item.id];
-      if (r === 'pass') pass++;
-      else if (r === 'fail') {
-        fail++;
-        failItems.push({ ...item, note: state.notes[item.id]||'', photos: state.photos[item.id]||[] });
-      }
-      else if (r === 'na') na++;
-    });
-  });
-
-  document.getElementById('rptRoomTitle').textContent = 'Room ' + state.room + (state.floor ? '  —  Floor ' + state.floor : '');
-  document.getElementById('rptMeta').textContent = state.date + '  |  Started: ' + state.time + '  |  Submitted: ' + state.submitTime + '  |  ' + state.shift + '  |  ' + state.staff + '  |  ' + (state.role==='supervisor'?'Supervisor':'Cleaner');
+  document.getElementById('rptAreaTitle').textContent =
+    areaLabelEn() + (state.floor ? '  —  Floor ' + state.floor : '');
+  document.getElementById('rptMeta').textContent =
+    state.date + '  |  Started: ' + state.time + '  |  Submitted: ' + state.submitTime +
+    '  |  ' + state.shift + '  |  ' + state.staff + '  |  ' + (state.role==='supervisor'?'Supervisor':'Cleaner');
 
   const statusMap = {
-    approved:{ en:'✅ APPROVED', ar:'معتمدة – جاهزة للنزيل', cls:'approved' },
+    approved:{ en:'✅ APPROVED', ar:'معتمدة – جاهزة للاستخدام', cls:'approved' },
     reclean: { en:'🔄 RE-CLEAN NEEDED', ar:'تحتاج إعادة تنظيف', cls:'reclean' },
     notready:{ en:'🚫 NOT READY', ar:'غير جاهزة', cls:'notready' },
     '':      { en:'📋 SUBMITTED', ar:'تم الإرسال', cls:'approved' }
@@ -692,6 +1379,7 @@ function submitReport() {
   document.getElementById('rptNA').textContent = na;
 
   const issuesWrap = document.getElementById('rptIssues');
+  issuesWrap.innerHTML = '';
   if (failItems.length) {
     issuesWrap.innerHTML = '<div class="section-divider">المشاكل المكتشفة &nbsp;|&nbsp; Issues Found</div>';
     failItems.forEach(i => {
@@ -702,7 +1390,7 @@ function submitReport() {
       if (i.photos.length) {
         const pr = document.createElement('div');
         pr.className = 'issue-photos';
-        i.photos.forEach((src, idx) => {
+        i.photos.forEach(src => {
           const img = document.createElement('img');
           img.src = src; img.className = 'issue-photo';
           img.onclick = () => { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.add('open'); };
@@ -716,203 +1404,609 @@ function submitReport() {
     issuesWrap.innerHTML = '<div style="text-align:center;padding:14px;color:var(--pass);font-weight:600">لا توجد مشاكل ✅ | No issues found</div>';
   }
 
+  // Only offer the native file-share button where the browser really supports it
+  let canShareFiles = false;
+  try {
+    const probe = new File([new Blob(['x'])], 'probe.pdf', { type:'application/pdf' });
+    canShareFiles = !!(navigator.canShare && navigator.canShare({ files:[probe] }));
+  } catch(e) { canShareFiles = false; }
+  document.getElementById('shareFileBtn').style.display = canShareFiles ? 'block' : 'none';
+
   showScreen('screenReport');
   document.getElementById('progressWrap').style.display = 'none';
-  document.getElementById('headerTitle').textContent = 'تقرير الغرفة ' + state.room + '  |  Room Report';
+  document.getElementById('headerTitle').textContent = 'التقرير | Report';
   document.getElementById('headerSub').textContent = 'Golden Vision Hotel';
 }
 
 // ══════════════════════════════════════════
-// WHATSAPP — pure English to avoid RTL issues in URL
+// WHATSAPP TEXT
 // ══════════════════════════════════════════
 function shareWhatsApp() {
   const pass = document.getElementById('rptPass').textContent;
   const fail = document.getElementById('rptFail').textContent;
   const na   = document.getElementById('rptNA').textContent;
-
-  const statusEn = { approved:'APPROVED - Ready for Guest', reclean:'RE-CLEAN NEEDED', notready:'NOT READY', '':'SUBMITTED' }[state.approval] || 'SUBMITTED';
+  const statusEn = { approved:'APPROVED - Ready for Use', reclean:'RE-CLEAN NEEDED', notready:'NOT READY', '':'SUBMITTED' }[state.approval] || 'SUBMITTED';
   const statusEmoji = { approved:'✅', reclean:'🔄', notready:'🚫', '':'📋' }[state.approval] || '📋';
   const shiftMap = { Morning:'Morning / Sabah', Evening:'Evening / Masaa', Night:'Night / Layl' };
-  const roleEn   = state.role === 'supervisor' ? 'Supervisor' : 'Cleaner';
+  const roleEn = state.role === 'supervisor' ? 'Supervisor' : 'Cleaner';
 
   const failLines = [];
-  SECTIONS.forEach(sec => {
-    sec.items.forEach(item => {
-      if (state.results[item.id] === 'fail') {
-        const note = state.notes[item.id] ? ' -- Note: ' + state.notes[item.id] : '';
-        const photoCount = (state.photos[item.id]||[]).length;
-        const photoNote = photoCount ? ' (' + photoCount + ' photo(s) in PDF)' : '';
-        failLines.push('  ❌ ' + item.en + note + photoNote);
-      }
-    });
-  });
+  currentArea.sections.forEach(sec => sec.items.forEach(item => {
+    if (state.results[item.id] === 'fail') {
+      const note = state.notes[item.id] ? ' -- Note: ' + state.notes[item.id] : '';
+      const n = (state.photos[item.id]||[]).length;
+      failLines.push('  ❌ ' + item.en + note + (n ? ' (' + n + ' photo(s) in PDF)' : ''));
+    }
+  }));
 
-  let msg = '🏨 *GOLDEN VISION HOTEL - Room Inspection Report*\n';
+  let msg = '🏨 *GOLDEN VISION HOTEL - Inspection Report*\n';
   msg += '------------------------------------\n';
-  msg += '🚪 Room: ' + state.room + (state.floor ? '  |  Floor: ' + state.floor : '') + '\n';
+  msg += '📍 Area: ' + areaLabelEn() + (state.floor ? '  |  Floor: ' + state.floor : '') + '\n';
   msg += '📅 Date: ' + state.date + '\n';
   msg += '🕐 Started: ' + state.time + '  |  Submitted: ' + (state.submitTime||'-') + '\n';
   msg += '⏰ Shift: ' + (shiftMap[state.shift] || state.shift) + '\n';
   msg += '👤 Staff: ' + state.staff + '\n';
   msg += '🏷 Role: ' + roleEn + '\n';
+  if (state.assignedBy) msg += '👁 Assigned by: ' + state.assignedBy + '\n';
   msg += '------------------------------------\n';
   msg += statusEmoji + ' *STATUS: ' + statusEn + '*\n';
   msg += '✅ Pass: ' + pass + '  |  ❌ Fail: ' + fail + '  |  ➖ N/A: ' + na + '\n';
-  if (failLines.length) {
-    msg += '\n⚠ *ISSUES FOUND:*\n' + failLines.join('\n') + '\n';
-  }
+  if (failLines.length) msg += '\n⚠ *ISSUES FOUND:*\n' + failLines.join('\n') + '\n';
   msg += '------------------------------------\n';
-  msg += '_Auto-generated - Golden Vision Room Inspection_';
+  msg += '_Auto-generated - Golden Vision Inspection_';
 
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
 // ══════════════════════════════════════════
-// PDF — English only (jsPDF does not support Arabic)
+// PDF — bilingual, English left / Arabic right
 // ══════════════════════════════════════════
+function registerArabicFont(doc) {
+  if (typeof AMIRI_REGULAR === 'undefined') {
+    throw new Error('Arabic font file not loaded. Make sure amiri-font.js sits next to index.html.');
+  }
+  doc.addFileToVFS('Amiri-Regular.ttf', AMIRI_REGULAR);
+  doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+  doc.addFileToVFS('Amiri-Bold.ttf', AMIRI_BOLD);
+  doc.addFont('Amiri-Bold.ttf', 'Amiri', 'bold');
+}
+
+function fileNameBase() {
+  const slug = (state.room ? 'Room' + state.room : state.areaEn).replace(/[^A-Za-z0-9]+/g,'_');
+  return 'GVH_' + slug + '_' + state.date + '_' + (state.time||'').replace(':','h');
+}
+
 function downloadPDF() {
+  try { buildPDF().save(fileNameBase() + '.pdf'); }
+  catch(e) { alert('PDF error: ' + e.message + '\nUse the WhatsApp text option instead.'); }
+}
+
+async function sharePDFFile() {
   try {
-    generatePDF();
+    const blob = buildPDF().output('blob');
+    const file = new File([blob], fileNameBase() + '.pdf', { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files:[file] })) {
+      await navigator.share({ files:[file], title:'Golden Vision Hotel — Inspection Report' });
+    } else {
+      buildPDF().save(fileNameBase() + '.pdf');
+    }
   } catch(e) {
-    alert('PDF error: ' + e.message + '\nPlease try again or use WhatsApp to share the report.');
+    if (e && e.name === 'AbortError') return;   // user closed the share sheet
+    alert('Share error: ' + e.message);
   }
 }
 
-function generatePDF() {
+function buildPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  registerArabicFont(doc);
+
   const pw = 210, ph = 297;
+  const L = 14, R = pw - 14;
   let y = 0;
 
-  // ── Header
+  const EN  = w => doc.setFont('helvetica', w || 'normal');
+  const ARF = w => doc.setFont('Amiri', w || 'normal');
+  const need = mm => { if (y > ph - mm) { doc.addPage(); y = 16; } };
+
+  // ── Header band
   doc.setFillColor(26,58,92);
   doc.rect(0,0,pw,40,'F');
   doc.setTextColor(255,255,255);
-  doc.setFontSize(20); doc.setFont('helvetica','bold');
-  doc.text('Golden Vision Hotel', pw/2, 14, {align:'center'});
-  doc.setFontSize(11); doc.setFont('helvetica','normal');
-  doc.text('Room Inspection Report', pw/2, 22, {align:'center'});
+  EN('bold'); doc.setFontSize(19);
+  doc.text('Golden Vision Hotel', pw/2, 12, {align:'center'});
+  EN('normal'); doc.setFontSize(10.5);
+  doc.text('Inspection Report', L, 21);
+  ARF('normal'); doc.setFontSize(12);
+  doc.text(AR('تقرير الفحص'), R, 21.5, {align:'right'});
 
   const statusLabel = {approved:'APPROVED',reclean:'RE-CLEAN NEEDED',notready:'NOT READY','':'SUBMITTED'}[state.approval]||'SUBMITTED';
-  const statusRGB   = {approved:[34,139,34],reclean:[200,140,0],notready:[200,40,40],'':  [34,139,34]}[state.approval]||[34,139,34];
-  doc.setFontSize(13); doc.setFont('helvetica','bold');
+  const statusAr    = {approved:'معتمدة',reclean:'تحتاج إعادة تنظيف',notready:'غير جاهزة','':'تم الإرسال'}[state.approval]||'تم الإرسال';
+  const statusRGB   = {approved:[34,139,34],reclean:[200,140,0],notready:[200,40,40],'':[34,139,34]}[state.approval]||[34,139,34];
+  doc.setFillColor(255,255,255);
+  doc.roundedRect(L, 26, pw-28, 10, 2, 2, 'F');
   doc.setTextColor(...statusRGB);
-  doc.text(statusLabel, pw/2, 33, {align:'center'});
+  EN('bold'); doc.setFontSize(11);
+  doc.text(statusLabel, L+4, 32.8);
+  ARF('bold'); doc.setFontSize(12);
+  doc.text(AR(statusAr), R-4, 33.2, {align:'right'});
 
   y = 48;
-  doc.setTextColor(30,30,30);
 
-  // ── Meta info
-  const shiftDisplay = {Morning:'Morning',Evening:'Evening',Night:'Night'}[state.shift]||state.shift;
+  // ── Meta block: English label left, value centre, Arabic label right
+  const shiftAr = {Morning:'صباح',Evening:'مساء',Night:'ليل'}[state.shift] || state.shift;
   const meta = [
-    ['Room', state.room],         ['Floor', state.floor||'-'],
-    ['Date', state.date],         ['Shift', shiftDisplay],
-    ['Started', state.time],      ['Submitted', state.submitTime||'-'],
-    ['Staff', state.staff],       ['Role', state.role==='supervisor'?'Supervisor':'Cleaner']
+    ['Area',      state.room ? ('Room ' + state.room) : state.areaEn, 'المنطقة'],
+    ['Floor',     state.floor || '-',                                 'الطابق'],
+    ['Date',      state.date,                                         'التاريخ'],
+    ['Shift',     state.shift,                                        shiftAr],
+    ['Started',   state.time,                                         'وقت البدء'],
+    ['Submitted', state.submitTime || '-',                            'وقت الإرسال'],
+    ['Staff',     state.staff,                                        'الموظف'],
+    ['Role',      state.role === 'supervisor' ? 'Supervisor' : 'Cleaner',
+                  state.role === 'supervisor' ? 'مشرف' : 'عامل نظافة'],
   ];
+  if (state.assignedBy) meta.push(['Assigned by', state.assignedBy, 'كُلّف بواسطة']);
+  if (state.nextDue)    meta.push(['Next Due',    state.nextDue,    'الفحص القادم']);
+
+  doc.setDrawColor(215,215,215);
+  doc.setFillColor(248,248,246);
+  doc.roundedRect(L, y-5.5, pw-28, meta.length*6.2 + 4, 2, 2, 'FD');
   doc.setFontSize(9);
-  meta.forEach((row, i) => {
-    const col = i % 2; const ri = Math.floor(i/2);
-    const x = col === 0 ? 14 : 110;
-    const yy = y + ri * 7;
-    doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
-    doc.text(row[0] + ':', x, yy);
-    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
-    doc.text(String(row[1]), x + 26, yy);
+  meta.forEach(([en, val, ar]) => {
+    EN('bold');    doc.setTextColor(95,95,95); doc.text(en + ':', L+4, y);
+    EN('normal');  doc.setTextColor(20,20,20); doc.text(String(val), L+32, y);
+    ARF('normal'); doc.setTextColor(95,95,95); doc.text(AR(ar), R-4, y+0.4, {align:'right'});
+    y += 6.2;
   });
-  y += 33;
+  y += 8;
 
   // ── Summary boxes
   const passN = +document.getElementById('rptPass').textContent;
   const failN = +document.getElementById('rptFail').textContent;
   const naN   = +document.getElementById('rptNA').textContent;
-  const bW=54, bH=16, bGap=6, bStart=(pw-(bW*3+bGap*2))/2;
-  [[passN,'PASS',[34,139,34]],[failN,'FAIL',[180,30,30]],[naN,'N/A',[100,100,100]]].forEach(([n,l,c],i) => {
+  const bW=54, bH=18, bGap=6, bStart=(pw-(bW*3+bGap*2))/2;
+  [[passN,'PASS','ناجح',[34,139,34]],
+   [failN,'FAIL','فاشل',[180,30,30]],
+   [naN,'N/A','لا ينطبق',[105,105,105]]].forEach(([n,l,la,c],i) => {
     const bx = bStart + i*(bW+bGap);
     doc.setFillColor(...c);
     doc.roundedRect(bx,y,bW,bH,3,3,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255);
+    EN('bold'); doc.setFontSize(14);
     doc.text(String(n), bx+bW/2, y+8, {align:'center'});
-    doc.setFontSize(7); doc.setFont('helvetica','normal');
-    doc.text(l, bx+bW/2, y+13, {align:'center'});
+    EN('normal'); doc.setFontSize(7);
+    doc.text(l, bx+bW/2 - 9, y+14, {align:'center'});
+    ARF('normal'); doc.setFontSize(9);
+    doc.text(AR(la), bx+bW/2 + 11, y+14.4, {align:'center'});
   });
-  y += 22;
+  y += 26;
 
-  // ── Sections
-  SECTIONS.forEach(sec => {
-    if (y > ph-30) { doc.addPage(); y = 16; }
+  // ── Sections and items
+  currentArea.sections.forEach(sec => {
+    need(36);
     doc.setFillColor(26,58,92);
-    doc.rect(10,y,pw-20,9,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text(sec.en, 14, y+6.2);
-    y += 12;
+    doc.rect(L, y, pw-28, 9, 'F');
+    doc.setTextColor(255,255,255);
+    EN('bold'); doc.setFontSize(9.5);
+    doc.text(sec.en, L+3, y+6);
+    ARF('bold'); doc.setFontSize(11);
+    doc.text(AR(sec.ar), R-3, y+6.4, {align:'right'});
+    y += 13;
 
     sec.items.forEach(item => {
-      if (y > ph-20) { doc.addPage(); y = 16; }
-      const r = state.results[item.id]||'-';
-      const rColor = r==='pass'?[34,139,34]:r==='fail'?[180,30,30]:[100,100,100];
+      need(26);
+      const r = state.results[item.id] || '-';
+      const rColor = r==='pass'?[34,139,34]:r==='fail'?[180,30,30]:[115,115,115];
       const rLabel = r==='pass'?'PASS':r==='fail'?'FAIL':r==='na'?'N/A':'-';
 
-      doc.setDrawColor(220,220,220); doc.line(10,y,pw-10,y);
-      doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','normal');
-      doc.text(item.en, 14, y+5.5);
-      doc.setFont('helvetica','bold'); doc.setTextColor(...rColor);
-      doc.text(rLabel, pw-14, y+5.5, {align:'right'});
-      y += 8;
+      doc.setDrawColor(230,230,230);
+      doc.line(L, y, R, y);
 
-      if (r === 'fail') {
-        if (state.notes[item.id]) {
-          if (y > ph-12) { doc.addPage(); y = 16; }
-          doc.setTextColor(120,60,60); doc.setFontSize(8); doc.setFont('helvetica','italic');
-          const noteLines = doc.splitTextToSize('Note: ' + state.notes[item.id], pw-36);
-          doc.text(noteLines, 18, y+4);
-          y += noteLines.length * 5 + 2;
-        }
+      EN('normal'); doc.setFontSize(8.5); doc.setTextColor(35,35,35);
+      const enLines = doc.splitTextToSize(item.en, 72);
+      doc.text(enLines, L+1, y+5);
+
+      ARF('normal'); doc.setFontSize(10); doc.setTextColor(35,35,35);
+      const arLines = doc.splitTextToSize(AR(item.ar), 72);
+      doc.text(arLines, R-1, y+5.4, {align:'right'});
+
+      doc.setFillColor(...rColor);
+      doc.roundedRect(pw/2 - 11, y+1.8, 22, 5.6, 1.5, 1.5, 'F');
+      doc.setTextColor(255,255,255); EN('bold'); doc.setFontSize(7);
+      doc.text(rLabel, pw/2, y+5.7, {align:'center'});
+
+      y += Math.max(enLines.length, arLines.length) * 4.5 + 4;
+
+      if (state.notes[item.id]) {
+        need(16);
+        doc.setTextColor(115,70,70);
+        EN('italic'); doc.setFontSize(7.5);
+        const nl = doc.splitTextToSize('Note: ' + state.notes[item.id], pw-42);
+        doc.text(nl, L+4, y+3);
+        y += nl.length * 3.8 + 3;
       }
 
-      // Show photos for ANY item that has them (pass or fail)
       const photos = state.photos[item.id] || [];
       if (photos.length) {
-        if (y > ph-50) { doc.addPage(); y = 16; }
-        const imgW = 55, imgH = 42, gap = 5;
-        let px = 14;
-        photos.forEach((src) => {
+        const imgW = 52, imgH = 39, gap = 5;
+        need(imgH + 14);
+        let px = L+2;
+        photos.forEach(src => {
           if (!src || src.length < 50) return;
-          if (px + imgW > pw - 14) { px = 14; y += imgH + gap; }
-          if (y > ph - 50) { doc.addPage(); y = 16; px = 14; }
+          if (px + imgW > R) { px = L+2; y += imgH + gap; need(imgH + 14); }
           try {
-            // Determine format from data URI
-            const fmt = src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(src, fmt, px, y, imgW, imgH, undefined, 'FAST');
-            px += imgW + gap;
-          } catch(imgErr) {
-            // Draw placeholder box if image fails
-            doc.setDrawColor(200,200,200);
-            doc.setFillColor(245,245,245);
+            doc.addImage(src, 'JPEG', px, y, imgW, imgH, undefined, 'FAST');
+            doc.setDrawColor(205,205,205);
+            doc.rect(px, y, imgW, imgH);
+          } catch(err) {
+            doc.setDrawColor(205,205,205); doc.setFillColor(245,245,245);
             doc.rect(px, y, imgW, imgH, 'FD');
-            doc.setTextColor(150,150,150); doc.setFontSize(7);
-            doc.text('Photo', px + imgW/2, y + imgH/2, {align:'center'});
-            px += imgW + gap;
+            doc.setTextColor(150,150,150); EN('normal'); doc.setFontSize(7);
+            doc.text('Photo unavailable', px + imgW/2, y + imgH/2, {align:'center'});
           }
+          px += imgW + gap;
         });
-        y += imgH + gap + 2;
+        y += imgH + 6;
       }
     });
-    y += 3;
+    y += 4;
   });
 
-  // ── Footer
+  // ── Signature strip
+  need(34);
+  y += 8;
+  doc.setDrawColor(185,185,185);
+  doc.line(L, y, L+72, y);
+  doc.line(R-72, y, R, y);
+  EN('normal'); doc.setFontSize(8); doc.setTextColor(85,85,85);
+  doc.text('Inspected by: ' + state.staff, L, y+5);
+  doc.text('Received by / Administrator', R-72, y+5);
+  ARF('normal'); doc.setFontSize(9.5); doc.setTextColor(85,85,85);
+  doc.text(AR('توقيع الفاحص'), L+72, y+10.5, {align:'right'});
+  doc.text(AR('توقيع الإدارة'), R, y+10.5, {align:'right'});
+
+  // ── Footer on every page
   const pages = doc.getNumberOfPages();
   for (let p = 1; p <= pages; p++) {
     doc.setPage(p);
     doc.setFillColor(26,58,92);
-    doc.rect(0,ph-13,pw,13,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text('Golden Vision Hotel  –  Confidential Quality Report', pw/2, ph-5.5, {align:'center'});
-    doc.text('Page ' + p + ' of ' + pages, pw-14, ph-5.5, {align:'right'});
+    doc.rect(0, ph-13, pw, 13, 'F');
+    doc.setTextColor(255,255,255);
+    EN('normal'); doc.setFontSize(7.5);
+    doc.text('Golden Vision Hotel — Confidential Quality Report', L, ph-5);
+    ARF('normal'); doc.setFontSize(9.5);
+    doc.text(AR('تقرير جودة سري'), pw/2 + 30, ph-4.6, {align:'center'});
+    EN('normal'); doc.setFontSize(7.5);
+    doc.text('Page ' + p + ' / ' + pages, R, ph-5, {align:'right'});
   }
 
-  doc.save('GVH_Room_' + state.room + '_' + state.date + '_' + (state.time||'').replace(':','h') + '.pdf');
+  return doc;
+}
+
+// ══════════════════════════════════════════
+// MAINTENANCE LOG
+// ══════════════════════════════════════════
+let maintData = maintLoad();
+
+(function buildMaintRooms(){
+  const sel = document.getElementById('maintRoom');
+  FLOORS.forEach(f => {
+    const grp = document.createElement('optgroup');
+    grp.label = f.ar + ' / ' + f.en;
+    for (let r = f.from; r <= f.to; r++) {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r;
+      grp.appendChild(o);
+    }
+    sel.appendChild(grp);
+  });
+})();
+
+function openMaint() {
+  if (!currentStaff) return;
+  maintData = maintLoad();
+  renderMaint();
+  showScreen('screenMaint');
+  document.getElementById('headerTitle').textContent = 'سجل الصيانة | Maintenance';
+  document.getElementById('headerSub').textContent = currentStaff.name;
+}
+
+function closeMaint() {
+  showScreen('screenSetup');
+  document.getElementById('headerTitle').textContent = 'فحص الجودة | Quality Inspection';
+  document.getElementById('headerSub').textContent = 'نظام ضمان الجودة';
+}
+
+// Every overdue task across every room — the thing the owner actually needs
+function allOverdue() {
+  const out = [];
+  FLOORS.forEach(f => {
+    for (let r = f.from; r <= f.to; r++) {
+      MAINT_TASKS.forEach(t => {
+        const s = maintStatus(String(r), t, maintData);
+        if (s.status === 'overdue') out.push({ room:String(r), task:t, ...s });
+      });
+    }
+  });
+  return out.sort((a,b) => a.due < b.due ? -1 : 1);
+}
+
+function renderMaint() {
+  const room = document.getElementById('maintRoom').value;
+
+  // Overdue summary across the whole hotel
+  const od = allOverdue();
+  const sum = document.getElementById('overdueSummary');
+  if (!od.length) {
+    sum.innerHTML = '<div class="overdue-summary">✅ لا توجد مهام متأخرة<br>' +
+      '<span style="font-size:12px;opacity:0.8">No overdue maintenance recorded on this device</span></div>';
+  } else {
+    let h = '<div class="overdue-summary">⚠ <strong>' + od.length + '</strong> مهمة متأخرة | overdue task(s)<br>' +
+            '<span style="font-size:12px;opacity:0.8">Oldest first</span></div>';
+    od.slice(0, 8).forEach(o => {
+      h += '<div class="overdue-item"><strong>Room ' + o.room + '</strong> — ' + o.task.en +
+           ' <span style="color:var(--fail);font-weight:700">(' + Math.abs(o.days) + ' days late)</span><br>' +
+           '<span style="color:#666">غرفة ' + o.room + ' — ' + o.task.ar + '</span></div>';
+    });
+    if (od.length > 8) h += '<div style="font-size:12px;color:#666;padding:4px 2px">…and ' + (od.length-8) + ' more</div>';
+    sum.innerHTML = h;
+  }
+
+  // Task list for the selected room
+  const list = document.getElementById('maintList');
+  if (!room) {
+    list.innerHTML = '<div style="max-width:600px;margin:0 auto;padding:16px;text-align:center;color:var(--text-muted);font-size:14px">' +
+      'اختر غرفة لعرض سجلها<br>Select a room to see its maintenance record</div>';
+    return;
+  }
+
+  let h = '<div style="max-width:600px;margin:0 auto;padding:0 16px">';
+  MAINT_TASKS.forEach(t => {
+    const s = maintStatus(room, t, maintData);
+    const pill = { overdue:['pill-overdue','متأخرة / OVERDUE'],
+                   soon:['pill-soon','قريباً / DUE SOON'],
+                   ok:['pill-ok','في الموعد / OK'],
+                   never:['pill-never','لم يُسجّل / NO RECORD'] }[s.status];
+    h += '<div class="maint-row ' + s.status + '">' +
+      '<div class="maint-title">' + t.ar + '</div>' +
+      '<div class="maint-en">' + t.en + ' — every ' + t.months + ' months / كل ' + t.months + ' أشهر</div>' +
+      '<div class="maint-dates">' +
+        '<span class="maint-pill ' + pill[0] + '">' + pill[1] + '</span><br>' +
+        (s.last
+          ? 'آخر مرة / Last done: <strong>' + s.last + '</strong><br>' +
+            'الموعد القادم / Next due: <strong>' + s.due + '</strong>' +
+            (s.days < 0 ? ' <span style="color:var(--fail);font-weight:700">(' + Math.abs(s.days) + ' days late)</span>'
+                        : ' <span style="color:var(--text-muted)">(in ' + s.days + ' days)</span>')
+          : 'لا يوجد سجل سابق / No previous record') +
+      '</div>' +
+      '<div class="maint-actions">' +
+        '<button class="maint-done-btn" onclick="maintDone(\'' + t.id + '\')">✓ تم اليوم / Done today</button>' +
+        '<button class="maint-date-btn" onclick="maintDoneOn(\'' + t.id + '\')">📅 تاريخ آخر</button>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  list.innerHTML = h;
+}
+
+function maintDone(taskId) {
+  maintRecord(taskId, todayISO());
+}
+
+function maintDoneOn(taskId) {
+  const d = prompt('أدخل التاريخ / Enter the date it was done (YYYY-MM-DD):', todayISO());
+  if (!d) return;
+  // JavaScript silently rolls 2026-02-30 into 2026-03-02, so round-trip the
+  // date and make sure it comes back unchanged before trusting it.
+  const parsed = new Date(d + 'T00:00:00');
+  const validShape = /^\d{4}-\d{2}-\d{2}$/.test(d);
+  if (!validShape || isNaN(parsed) || parsed.toISOString().split('T')[0] !== d) {
+    alert('تاريخ غير صحيح / Invalid date. Use YYYY-MM-DD, e.g. ' + todayISO());
+    return;
+  }
+  if (d > todayISO()) { alert('لا يمكن تسجيل تاريخ في المستقبل / Cannot log a future date.'); return; }
+  maintRecord(taskId, d);
+}
+
+function maintRecord(taskId, date) {
+  const room = document.getElementById('maintRoom').value;
+  if (!room) return;
+  const task = MAINT_TASKS.find(t => t.id === taskId);
+  if (!maintData[room]) maintData[room] = {};
+  maintData[room][taskId] = date;
+  maintData[room]['_by_' + taskId] = currentStaff ? currentStaff.name : '';
+  if (maintSave(maintData)) renderMaint();
+}
+
+// ── Calendar export (.ics) — works on Windows, iOS and Android
+function icsEscape(s) { return String(s).replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n'); }
+function icsDate(iso) { return iso.replace(/-/g,''); }
+
+function maintICS() {
+  const room = document.getElementById('maintRoom').value;
+  if (!room) { alert('اختر غرفة أولاً / Select a room first.'); return; }
+  const rows = MAINT_TASKS.map(t => ({ t, s: maintStatus(room, t, maintData) }))
+                          .filter(x => x.s.due);
+  if (!rows.length) { alert('لا توجد مواعيد مسجلة لهذه الغرفة / Nothing logged for this room yet.'); return; }
+
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  let ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Golden Vision Hotel//Maintenance//EN','CALSCALE:GREGORIAN'];
+  rows.forEach(({t,s}) => {
+    ics.push('BEGIN:VEVENT',
+      'UID:gvh-' + room + '-' + t.id + '-' + icsDate(s.due) + '@goldenvision',
+      'DTSTAMP:' + stamp,
+      'DTSTART;VALUE=DATE:' + icsDate(s.due),
+      'DTEND;VALUE=DATE:' + icsDate(addMonths(s.due,0) === s.due ? nextDay(s.due) : nextDay(s.due)),
+      'SUMMARY:' + icsEscape('Room ' + room + ' — ' + t.en),
+      'DESCRIPTION:' + icsEscape('Golden Vision Hotel maintenance\n' + t.ar + '\nRoom ' + room +
+                                 '\nLast done: ' + s.last + '\nEvery ' + t.months + ' months'),
+      'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY',
+      'DESCRIPTION:' + icsEscape('Due in 7 days: Room ' + room + ' — ' + t.en),
+      'END:VALARM','END:VEVENT');
+  });
+  ics.push('END:VCALENDAR');
+
+  const blob = new Blob([ics.join('\r\n') + '\r\n'], { type:'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'GVH_Room' + room + '_maintenance.ics';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function nextDay(iso) {
+  const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate()+1);
+  return d.toISOString().split('T')[0];
+}
+
+// ── Backup / restore, because this log lives in one browser
+function maintBackup() {
+  const payload = { app:'GVH-maintenance', version:1, exported:new Date().toISOString(), data:maintData };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'GVH_maintenance_backup_' + todayISO() + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function maintRestore(input) {
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const p = JSON.parse(e.target.result);
+      if (p.app !== 'GVH-maintenance' || typeof p.data !== 'object')
+        throw new Error('Not a Golden Vision maintenance backup');
+      // Merge rather than overwrite, keeping whichever record is more recent
+      const merged = { ...maintData };
+      Object.keys(p.data).forEach(room => {
+        merged[room] = merged[room] || {};
+        Object.keys(p.data[room]).forEach(k => {
+          const incoming = p.data[room][k], existing = merged[room][k];
+          if (!existing || (k.charAt(0) !== '_' && incoming > existing)) merged[room][k] = incoming;
+        });
+      });
+      maintData = merged;
+      if (maintSave(maintData)) { renderMaint(); alert('تمت الاستعادة ✅ / Backup restored and merged.'); }
+    } catch(err) {
+      alert('ملف غير صالح / Could not read that backup file.\n' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Maintenance PDF — bilingual, same look as the inspection report
+function maintPDF() {
+  const room = document.getElementById('maintRoom').value;
+  if (!room) { alert('اختر غرفة أولاً / Select a room first.'); return; }
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    registerArabicFont(doc);
+    const pw = 210, ph = 297, L = 14, R = pw - 14;
+    const EN = w => doc.setFont('helvetica', w || 'normal');
+    const ARF = w => doc.setFont('Amiri', w || 'normal');
+    let y = 0;
+
+    doc.setFillColor(26,58,92); doc.rect(0,0,pw,34,'F');
+    doc.setTextColor(255,255,255);
+    EN('bold'); doc.setFontSize(19);
+    doc.text('Golden Vision Hotel', pw/2, 12, {align:'center'});
+    EN('normal'); doc.setFontSize(10.5);
+    doc.text('Room Maintenance Record — Room ' + room, L, 22);
+    ARF('normal'); doc.setFontSize(12);
+    doc.text(AR('سجل صيانة الغرفة ' + room), R, 22.5, {align:'right'});
+    doc.setFontSize(9); doc.setTextColor(210,210,210);
+    EN('normal'); doc.text('Generated ' + todayISO() + '  •  by ' + (currentStaff ? currentStaff.name : '-'), L, 29);
+
+    y = 44;
+    const f = getFloorForRoom(room);
+    const meta = [
+      ['Room', room, 'الغرفة'],
+      ['Floor', f ? f.floor : '-', 'الطابق'],
+      ['Date', todayISO(), 'التاريخ'],
+      ['Recorded by', currentStaff ? currentStaff.name : '-', 'المسؤول'],
+    ];
+    doc.setDrawColor(215,215,215); doc.setFillColor(248,248,246);
+    doc.roundedRect(L, y-5.5, pw-28, meta.length*6.2+4, 2, 2, 'FD');
+    doc.setFontSize(9);
+    meta.forEach(([en,val,ar]) => {
+      EN('bold');   doc.setTextColor(95,95,95); doc.text(en+':', L+4, y);
+      EN('normal'); doc.setTextColor(20,20,20); doc.text(String(val), L+34, y);
+      ARF('normal');doc.setTextColor(95,95,95); doc.text(AR(ar), R-4, y+0.4, {align:'right'});
+      y += 6.2;
+    });
+    y += 10;
+
+    doc.setFillColor(26,58,92); doc.rect(L, y, pw-28, 9, 'F');
+    doc.setTextColor(255,255,255);
+    EN('bold'); doc.setFontSize(9.5); doc.text('Scheduled Maintenance', L+3, y+6);
+    ARF('bold'); doc.setFontSize(11); doc.text(AR('الصيانة الدورية'), R-3, y+6.4, {align:'right'});
+    y += 13;
+
+    // column headers
+    EN('bold'); doc.setFontSize(7.5); doc.setTextColor(110,110,110);
+    doc.text('TASK', L+1, y);
+    doc.text('EVERY', L+78, y);
+    doc.text('LAST DONE', L+96, y);
+    doc.text('NEXT DUE', L+126, y);
+    y += 3;
+
+    MAINT_TASKS.forEach(t => {
+      const s = maintStatus(room, t, maintData);
+      if (y > ph - 40) { doc.addPage(); y = 18; }
+      doc.setDrawColor(230,230,230); doc.line(L, y, R, y);
+
+      EN('normal'); doc.setFontSize(8.5); doc.setTextColor(35,35,35);
+      doc.text(t.en, L+1, y+5.5);
+      doc.setFontSize(8);
+      doc.text('every ' + t.months + ' mo', L+78, y+5.5);
+      doc.text(s.last || '—', L+96, y+5.5);
+
+      const col = s.status === 'overdue' ? [180,30,30] : s.status === 'soon' ? [190,120,0]
+                : s.status === 'ok' ? [34,139,34] : [120,120,120];
+      EN('bold'); doc.setTextColor(...col);
+      doc.text(s.due || 'no record', L+126, y+5.5);
+      if (s.status === 'overdue') {
+        doc.setFontSize(7);
+        doc.text('(' + Math.abs(s.days) + 'd late)', L+126, y+9);
+      }
+
+      ARF('normal'); doc.setFontSize(9.5); doc.setTextColor(35,35,35);
+      doc.text(AR(t.ar), R-1, y+5.8, {align:'right'});
+      y += s.status === 'overdue' ? 12 : 9;
+    });
+
+    y += 8;
+    doc.setDrawColor(185,185,185);
+    doc.line(L, y, L+72, y); doc.line(R-72, y, R, y);
+    EN('normal'); doc.setFontSize(8); doc.setTextColor(85,85,85);
+    doc.text('Recorded by: ' + (currentStaff ? currentStaff.name : '-'), L, y+5);
+    doc.text('Received by / Administrator', R-72, y+5);
+    ARF('normal'); doc.setFontSize(9.5);
+    doc.text(AR('توقيع المسؤول'), L+72, y+10.5, {align:'right'});
+    doc.text(AR('توقيع الإدارة'), R, y+10.5, {align:'right'});
+
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(26,58,92); doc.rect(0, ph-13, pw, 13, 'F');
+      doc.setTextColor(255,255,255);
+      EN('normal'); doc.setFontSize(7.5);
+      doc.text('Golden Vision Hotel — Maintenance Record', L, ph-5);
+      ARF('normal'); doc.setFontSize(9.5);
+      doc.text(AR('سجل الصيانة'), pw/2 + 26, ph-4.6, {align:'center'});
+      EN('normal'); doc.setFontSize(7.5);
+      doc.text('Page ' + p + ' / ' + pages, R, ph-5, {align:'right'});
+    }
+
+    doc.save('GVH_Maintenance_Room' + room + '_' + todayISO() + '.pdf');
+  } catch(e) {
+    alert('PDF error: ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════
@@ -923,19 +2017,36 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
+
 function newInspection() {
   showScreen('screenSetup');
   document.getElementById('progressWrap').style.display = 'none';
-  document.getElementById('headerTitle').textContent = 'فحص الغرف | Room Inspection';
+  document.getElementById('headerTitle').textContent = 'فحص الجودة | Quality Inspection';
   document.getElementById('headerSub').textContent = 'نظام ضمان الجودة';
   document.getElementById('staffPin').value = '';
   document.getElementById('pinStatus').style.display = 'none';
+  document.getElementById('areaSelect').value = '';
   document.getElementById('roomNumber').value = '';
+  document.getElementById('roomWrap').style.display = 'none';
   document.getElementById('floorDisplay').style.display = 'none';
-  currentStaff = null;
-  state.role = '';
+  document.getElementById('assignBtn').style.display = 'none';
+  document.getElementById('maintBtn').style.display = 'none';
+  // Clear the assigned-task banner and drop the ?area=... link, so the next
+  // inspection starts clean instead of silently reusing the old assignment
+  document.getElementById('assignedBanner').style.display = 'none';
+  assignedBy = '';
+  if (location.search) history.replaceState(null, '', location.pathname);
+  currentStaff = null; currentArea = null;
+  state.role = ''; state.results = {}; state.submitTime = ''; state.assignedBy = '';
   checkSetupReady();
 }
+
+// Warn before an in-progress inspection is lost
+window.addEventListener('beforeunload', e => {
+  if (Object.keys(state.results).length && !state.submitTime) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
 </script>
 </body>
 </html>

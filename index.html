@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Golden Vision Hotel – Inspection</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="amiri-font.js"></script>
+<script src="arabic-font.js"></script>
 <style>
   :root {
     --gold: #B8960C;
@@ -1462,13 +1462,15 @@ function shareWhatsApp() {
 // PDF — bilingual, English left / Arabic right
 // ══════════════════════════════════════════
 function registerArabicFont(doc) {
-  if (typeof AMIRI_REGULAR === 'undefined') {
-    throw new Error('Arabic font file not loaded. Make sure amiri-font.js sits next to index.html.');
+  if (typeof ARABIC_REGULAR === 'undefined') {
+    throw new Error('Arabic font file not loaded. Make sure arabic-font.js sits next to index.html.');
   }
-  doc.addFileToVFS('Amiri-Regular.ttf', AMIRI_REGULAR);
-  doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-  doc.addFileToVFS('Amiri-Bold.ttf', AMIRI_BOLD);
-  doc.addFont('Amiri-Bold.ttf', 'Amiri', 'bold');
+  // Noto Naskh Arabic is embedded in every PDF, so the Arabic looks identical
+  // on iPhone, Android and Windows regardless of what fonts the device has.
+  doc.addFileToVFS('NotoNaskhArabic-Regular.ttf', ARABIC_REGULAR);
+  doc.addFont('NotoNaskhArabic-Regular.ttf', 'Arabic', 'normal');
+  doc.addFileToVFS('NotoNaskhArabic-Bold.ttf', ARABIC_BOLD);
+  doc.addFont('NotoNaskhArabic-Bold.ttf', 'Arabic', 'bold');
 }
 
 function fileNameBase() {
@@ -1506,7 +1508,7 @@ function buildPDF() {
   let y = 0;
 
   const EN  = w => doc.setFont('helvetica', w || 'normal');
-  const ARF = w => doc.setFont('Amiri', w || 'normal');
+  const ARF = w => doc.setFont('Arabic', w || 'normal');
   const need = mm => { if (y > ph - mm) { doc.addPage(); y = 16; } };
 
   // ── Header band
@@ -1556,7 +1558,7 @@ function buildPDF() {
   meta.forEach(([en, val, ar]) => {
     EN('bold');    doc.setTextColor(95,95,95); doc.text(en + ':', L+4, y);
     EN('normal');  doc.setTextColor(20,20,20); doc.text(String(val), L+32, y);
-    ARF('normal'); doc.setTextColor(95,95,95); doc.text(AR(ar), R-4, y+0.4, {align:'right'});
+    ARF('normal'); doc.setTextColor(95,95,95); doc.setFontSize(10); doc.text(AR(ar), R-4, y+0.6, {align:'right'}); doc.setFontSize(9);
     y += 6.2;
   });
   y += 8;
@@ -1607,8 +1609,8 @@ function buildPDF() {
       const enLines = doc.splitTextToSize(item.en, 72);
       doc.text(enLines, L+1, y+5);
 
-      ARF('normal'); doc.setFontSize(10); doc.setTextColor(35,35,35);
-      const arLines = doc.splitTextToSize(AR(item.ar), 72);
+      ARF('normal'); doc.setFontSize(10.5); doc.setTextColor(35,35,35);
+      const arLines = doc.splitTextToSize(AR(item.ar), 74);
       doc.text(arLines, R-1, y+5.4, {align:'right'});
 
       doc.setFillColor(...rColor);
@@ -1616,7 +1618,7 @@ function buildPDF() {
       doc.setTextColor(255,255,255); EN('bold'); doc.setFontSize(7);
       doc.text(rLabel, pw/2, y+5.7, {align:'center'});
 
-      y += Math.max(enLines.length, arLines.length) * 4.5 + 4;
+      y += Math.max(enLines.length, arLines.length) * 5.0 + 4;
 
       if (state.notes[item.id]) {
         need(16);
@@ -1908,7 +1910,7 @@ function maintPDF() {
     registerArabicFont(doc);
     const pw = 210, ph = 297, L = 14, R = pw - 14;
     const EN = w => doc.setFont('helvetica', w || 'normal');
-    const ARF = w => doc.setFont('Amiri', w || 'normal');
+    const ARF = w => doc.setFont('Arabic', w || 'normal');
     let y = 0;
 
     doc.setFillColor(26,58,92); doc.rect(0,0,pw,34,'F');
@@ -1936,7 +1938,7 @@ function maintPDF() {
     meta.forEach(([en,val,ar]) => {
       EN('bold');   doc.setTextColor(95,95,95); doc.text(en+':', L+4, y);
       EN('normal'); doc.setTextColor(20,20,20); doc.text(String(val), L+34, y);
-      ARF('normal');doc.setTextColor(95,95,95); doc.text(AR(ar), R-4, y+0.4, {align:'right'});
+      ARF('normal');doc.setTextColor(95,95,95); doc.setFontSize(10); doc.text(AR(ar), R-4, y+0.6, {align:'right'}); doc.setFontSize(9);
       y += 6.2;
     });
     y += 10;
@@ -1975,8 +1977,8 @@ function maintPDF() {
         doc.text('(' + Math.abs(s.days) + 'd late)', L+126, y+9);
       }
 
-      ARF('normal'); doc.setFontSize(9.5); doc.setTextColor(35,35,35);
-      doc.text(AR(t.ar), R-1, y+5.8, {align:'right'});
+      ARF('normal'); doc.setFontSize(10.5); doc.setTextColor(35,35,35);
+      doc.text(AR(t.ar), R-1, y+5.9, {align:'right'});
       y += s.status === 'overdue' ? 12 : 9;
     });
 
